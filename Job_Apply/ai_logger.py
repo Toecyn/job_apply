@@ -1,9 +1,7 @@
-import sqlite3
 import time
 import uuid
 from datetime import datetime
-
-DB_PATH = "tracker.db"
+from db import get_db
 
 # Model-aware pricing per token (verified May 2026)
 MODEL_PRICING = {
@@ -23,13 +21,13 @@ def log_ai_call(call_type, job_id, model, prompt_tokens, completion_tokens,
     })
     cost = (prompt_tokens * pricing["input"]) + (completion_tokens * pricing["output"])
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     conn.execute("""
         INSERT INTO ai_calls (
             id, timestamp, call_type, job_id, model,
             prompt_tokens, completion_tokens, latency_ms,
             cost_usd, success, error_text, output_preview
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (
         str(uuid.uuid4()),
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

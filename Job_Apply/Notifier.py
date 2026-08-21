@@ -1,4 +1,3 @@
-import sqlite3
 import json
 import smtplib
 import os
@@ -6,17 +5,16 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
 from dotenv import load_dotenv
+from db import get_db
 
 load_dotenv()
 
-DB_PATH = "tracker.db"
 GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
 
 def get_new_high_scoring_jobs():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
     jobs = conn.execute("""
         SELECT * FROM jobs
         WHERE score >= 70
@@ -30,7 +28,7 @@ def get_new_high_scoring_jobs():
 
 
 def get_unscored_jobs_count():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     count = conn.execute("""
         SELECT COUNT(*) FROM jobs
         WHERE score IS NULL AND is_stale = 0
@@ -40,7 +38,7 @@ def get_unscored_jobs_count():
 
 
 def get_stats():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     stats = {
         "total": conn.execute("SELECT COUNT(*) FROM jobs WHERE is_stale = 0").fetchone()[0],
         "new": conn.execute("SELECT COUNT(*) FROM jobs WHERE status = 'new' AND is_stale = 0").fetchone()[0],

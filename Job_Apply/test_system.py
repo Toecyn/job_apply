@@ -2,10 +2,10 @@
 System tests for job intelligence pipeline.
 Run with: python3 test_system.py
 """
-import sqlite3
 import json
 import os
 import sys
+from db import get_db
 
 PASS = 0
 FAIL = 0
@@ -61,12 +61,16 @@ except Exception as e:
 # DATABASE TESTS
 print("\n[3] Database integrity")
 try:
-    conn = sqlite3.connect("tracker.db")
-    tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+    conn = get_db()
+    tables = [r[0] for r in conn.execute(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+    ).fetchall()]
     test("jobs table exists", "jobs" in tables)
     test("applied_companies table exists", "applied_companies" in tables)
     test("ai_calls table exists", "ai_calls" in tables)
-    cols = [r[1] for r in conn.execute("PRAGMA table_info(jobs)").fetchall()]
+    cols = [r[0] for r in conn.execute(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'jobs'"
+    ).fetchall()]
     test("jobs has resume_path column", "resume_path" in cols)
     test("jobs has score column", "score" in cols)
     test("jobs has search_pass column", "search_pass" in cols)
@@ -90,8 +94,10 @@ try:
     test("ai_logger imports", True)
     test("log_ai_call function exists", callable(log_ai_call))
     test("call_claude_with_logging function exists", callable(call_claude_with_logging))
-    conn = sqlite3.connect("tracker.db")
-    ai_cols = [r[1] for r in conn.execute("PRAGMA table_info(ai_calls)").fetchall()]
+    conn = get_db()
+    ai_cols = [r[0] for r in conn.execute(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'ai_calls'"
+    ).fetchall()]
     test("ai_calls has latency_ms", "latency_ms" in ai_cols)
     test("ai_calls has cost_usd", "cost_usd" in ai_cols)
     test("ai_calls has success", "success" in ai_cols)

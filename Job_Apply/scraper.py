@@ -1,12 +1,11 @@
 import json
-import sqlite3
 import hashlib
 from datetime import datetime
 from jobspy import scrape_jobs
 from dotenv import load_dotenv
+from db import get_db
 load_dotenv()
 
-DB_PATH = "tracker.db"
 RESUME_PATH = "master_resume.json"
 
 CORE_TITLES = [
@@ -51,24 +50,12 @@ def load_config():
     return data["job_search_config"]
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS jobs (
-        id TEXT PRIMARY KEY, title TEXT, company TEXT, location TEXT,
-        source TEXT, date_posted TEXT, date_found TEXT, job_url TEXT,
-        description TEXT, score INTEGER DEFAULT NULL,
-        score_reasons TEXT DEFAULT NULL, score_gaps TEXT DEFAULT NULL,
-        status TEXT DEFAULT 'new', is_stale INTEGER DEFAULT 0,
-        country TEXT DEFAULT 'canada', is_remote INTEGER DEFAULT 0,
-        visa_required INTEGER DEFAULT 0, search_pass TEXT DEFAULT 'canada',
-        resume_path TEXT DEFAULT NULL, batch_id TEXT DEFAULT NULL)""")
-    for col, default in [
-        ("country",'"canada"'),("is_remote","0"),("visa_required","0"),
-        ("search_pass",'"canada"'),("resume_path","NULL"),("batch_id","NULL")]:
-        try:
-            conn.execute(f'ALTER TABLE jobs ADD COLUMN {col} TEXT DEFAULT {default}')
-        except Exception:
-            pass
+    """Ensure the Postgres schema exists (idempotent — see schema.sql)."""
+    import os
+    schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema.sql")
+    conn = get_db()
+    with open(schema_path) as f:
+        conn.execute(f.read())
     conn.commit()
     conn.close()
 
@@ -151,13 +138,13 @@ def run_search(titles, location, country, exclude_keywords,
     return all_jobs
 
 def save_jobs(jobs):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     c = conn.cursor()
     new_count = 0
     duplicate_count = 0
     for job in jobs:
         job_id = fingerprint(job.get("title",""), job.get("company",""), job.get("location",""))
-        c.execute("SELECT id FROM jobs WHERE id = ?", (job_id,))
+        c.execute("SELECT id FROM jobs WHERE id = %s", (job_id,))
         if c.fetchone():
             duplicate_count += 1
             continue
@@ -165,7 +152,7 @@ def save_jobs(jobs):
             id, title, company, location, source, date_posted,
             date_found, job_url, description, status, country,
             is_remote, visa_required, search_pass
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", (
             job_id, job.get("title",""), job.get("company",""),
             job.get("location",""), job.get("source",""),
             job.get("date_posted",""),
@@ -182,11 +169,11 @@ def save_jobs(jobs):
     return new_count
 
 def mark_stale_jobs():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     c = conn.cursor()
     c.execute("""UPDATE jobs SET is_stale = 1
-        WHERE status = 'new' AND date_found < datetime('now', '-7 days')""")
-    stale = conn.total_changes
+        WHERE status = 'new' AND date_found < to_char(NOW() - INTERVAL '7 days', 'YYYY-MM-DD HH24:MI:SS')""")
+    stale = c.rowcount
     conn.commit()
     conn.close()
     if stale > 0:

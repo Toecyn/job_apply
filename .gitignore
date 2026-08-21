@@ -1,1 +1,7 @@
 Job_Apply/tracker.db
+Job_Apply/.env
+Job_Apply/output/
+Job_Apply/__pycache__/
+**/__pycache__/
+*.pyc
+Job_Apply/venv/

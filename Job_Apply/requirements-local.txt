@@ -1,0 +1,7 @@
+# Full local dev install: pip install -r requirements-local.txt
+# Adds the scraping/scheduling/MCP deps that aren't needed by the deployed
+# Vercel dashboard and are deliberately left out of requirements.txt.
+-r requirements.txt
+python-jobspy
+apscheduler
+mcp

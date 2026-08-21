@@ -4,17 +4,16 @@ Submit:  python3 batch_scorer.py --submit
 Collect: python3 batch_scorer.py --collect <batch_id>
 Auto:    python3 batch_scorer.py
 """
-import sqlite3
 import json
 import os
 import sys
 from datetime import datetime
 from anthropic import Anthropic
 from dotenv import load_dotenv
+from db import get_db
 
 load_dotenv()
 
-DB_PATH = "tracker.db"
 RESUME_PATH = "master_resume.json"
 client = Anthropic()
 
@@ -70,8 +69,7 @@ def ensure_batch_table(conn):
 
 
 def submit_batch():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
 
     jobs = conn.execute("""
         SELECT id, title, company, location, description
@@ -115,11 +113,15 @@ def submit_batch():
     batch_id = batch.id
 
     for cid, jid in job_id_map.items():
-        conn.execute("UPDATE jobs SET batch_id = ? WHERE id = ?", (batch_id, jid))
+        conn.execute("UPDATE jobs SET batch_id = %s WHERE id = %s", (batch_id, jid))
 
     ensure_batch_table(conn)
     conn.execute(
-        "INSERT OR REPLACE INTO batch_jobs (batch_id, submitted_at, job_count, status) VALUES (?,?,?,?)",
+        """INSERT INTO batch_jobs (batch_id, submitted_at, job_count, status) VALUES (%s,%s,%s,%s)
+           ON CONFLICT (batch_id) DO UPDATE SET
+               submitted_at = EXCLUDED.submitted_at,
+               job_count = EXCLUDED.job_count,
+               status = EXCLUDED.status""",
         (batch_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), len(jobs), "submitted")
     )
     conn.commit()
@@ -157,7 +159,7 @@ def collect_results(batch_id):
     with open(f"output/{maps[0]}") as f:
         job_id_map = json.load(f)
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     scored = 0
     failed = 0
 
@@ -171,7 +173,7 @@ def collect_results(batch_id):
                 text = text.replace("```json", "").replace("```", "").strip()
                 data = json.loads(text)
                 conn.execute(
-                    "UPDATE jobs SET score=?, score_reasons=?, score_gaps=? WHERE id=?",
+                    "UPDATE jobs SET score=%s, score_reasons=%s, score_gaps=%s WHERE id=%s",
                     (
                         int(data.get("score", 0)),
                         json.dumps(data.get("reasons", [])),
@@ -188,7 +190,7 @@ def collect_results(batch_id):
 
     ensure_batch_table(conn)
     conn.execute(
-        "UPDATE batch_jobs SET status='completed', completed_at=?, jobs_scored=? WHERE batch_id=?",
+        "UPDATE batch_jobs SET status='completed', completed_at=%s, jobs_scored=%s WHERE batch_id=%s",
         (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), scored, batch_id)
     )
     conn.commit()
@@ -199,7 +201,7 @@ def collect_results(batch_id):
 
 
 def score_batch():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     try:
         ensure_batch_table(conn)
         pending = conn.execute(

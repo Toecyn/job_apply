@@ -1,4 +1,3 @@
-import sqlite3
 import json
 import os
 import re
@@ -7,10 +6,10 @@ from datetime import datetime
 from anthropic import Anthropic
 from ai_logger import call_claude_with_logging
 from dotenv import load_dotenv
+from db import get_db
 
 load_dotenv()
 
-DB_PATH = "tracker.db"
 RESUME_PATH = "master_resume.json"
 OUTPUT_DIR = "output"
 
@@ -51,9 +50,8 @@ def load_resume():
         return json.load(f)
 
 def get_job(job_id):
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    job = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    conn = get_db()
+    job = conn.execute("SELECT * FROM jobs WHERE id = %s", (job_id,)).fetchone()
     conn.close()
     return dict(job) if job else None
 

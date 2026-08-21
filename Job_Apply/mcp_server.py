@@ -5,22 +5,15 @@ Exposes job pipeline capabilities as MCP tools callable by any AI agent.
 Run: python3 mcp_server.py
 Connect via Claude Desktop or any MCP-compatible client.
 """
-import sqlite3
 import json
 import asyncio
 from datetime import datetime
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp import types
+from db import get_db
 
-DB_PATH = "tracker.db"
 app = Server("job-intelligence")
-
-
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 
 @app.list_tools()
@@ -118,19 +111,20 @@ async def call_tool(name: str, arguments: dict):
                    score_reasons, score_gaps
             FROM jobs
             WHERE is_stale = 0
-            AND score >= ?
+            AND score >= %s
             AND length(description) >= 200
         """
         params = [min_score]
 
         if market != "all":
-            query += " AND search_pass = ?"
+            query += " AND search_pass = %s"
             params.append(market)
 
         if fresh_hours > 0:
-            query += f" AND date_found >= datetime('now', '-{fresh_hours} hours')"
+            query += " AND date_found >= to_char(NOW() - %s::interval, 'YYYY-MM-DD HH24:MI:SS')"
+            params.append(f"{fresh_hours} hours")
 
-        query += " ORDER BY score DESC LIMIT ?"
+        query += " ORDER BY score DESC LIMIT %s"
         params.append(limit)
 
         jobs = conn.execute(query, params).fetchall()
@@ -157,7 +151,7 @@ async def call_tool(name: str, arguments: dict):
     elif name == "get_job":
         job_id = arguments.get("job_id")
         conn = get_db()
-        job = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        job = conn.execute("SELECT * FROM jobs WHERE id = %s", (job_id,)).fetchone()
         conn.close()
 
         if not job:
@@ -181,8 +175,8 @@ async def call_tool(name: str, arguments: dict):
                 "scored": conn.execute("SELECT COUNT(*) FROM jobs WHERE score IS NOT NULL AND is_stale = 0").fetchone()[0],
                 "strong_matches_70": conn.execute("SELECT COUNT(*) FROM jobs WHERE score >= 70 AND is_stale = 0").fetchone()[0],
                 "strong_matches_85": conn.execute("SELECT COUNT(*) FROM jobs WHERE score >= 85 AND is_stale = 0").fetchone()[0],
-                "fresh_24hrs": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= datetime('now', '-24 hours') AND is_stale = 0").fetchone()[0],
-                "fresh_72hrs": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= datetime('now', '-72 hours') AND is_stale = 0").fetchone()[0],
+                "fresh_24hrs": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= to_char(NOW() - INTERVAL '24 hours', 'YYYY-MM-DD HH24:MI:SS') AND is_stale = 0").fetchone()[0],
+                "fresh_72hrs": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= to_char(NOW() - INTERVAL '72 hours', 'YYYY-MM-DD HH24:MI:SS') AND is_stale = 0").fetchone()[0],
             },
             "markets": {
                 "canada": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada' AND is_stale = 0").fetchone()[0],
@@ -198,8 +192,8 @@ async def call_tool(name: str, arguments: dict):
             "ai_calls": {
                 "total_calls": conn.execute("SELECT COUNT(*) FROM ai_calls").fetchone()[0],
                 "total_cost_usd": round(conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls").fetchone()[0], 4),
-                "today_calls": conn.execute("SELECT COUNT(*) FROM ai_calls WHERE timestamp >= date('now')").fetchone()[0],
-                "today_cost_usd": round(conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls WHERE timestamp >= date('now')").fetchone()[0], 4),
+                "today_calls": conn.execute("SELECT COUNT(*) FROM ai_calls WHERE timestamp >= to_char(CURRENT_DATE, 'YYYY-MM-DD')").fetchone()[0],
+                "today_cost_usd": round(conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls WHERE timestamp >= to_char(CURRENT_DATE, 'YYYY-MM-DD')").fetchone()[0], 4),
                 "success_rate_pct": round(conn.execute("SELECT COALESCE(AVG(success),0)*100 FROM ai_calls").fetchone()[0], 1),
             },
             "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")

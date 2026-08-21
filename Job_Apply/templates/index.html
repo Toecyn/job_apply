@@ -202,7 +202,7 @@ header h1 { font-size: 18px; font-weight: 600; }
           <div class="jmeta">{{ job.company }} &nbsp;·&nbsp; {{ job.location }} &nbsp;·&nbsp; {{ job.date_posted if job.date_posted and job.date_posted != 'nan' else job.date_found[:10] }}</div>
         </div>
         <div class="jbadges">
-          <span class="score-badge {% if job.score >= 85 %}s85{% elif job.score >= 70 %}s70{% else %}s50{% endif %}">{{ job.score }}/100</span>
+          <span class="score-badge {% if job.score is none %}s50{% elif job.score >= 85 %}s85{% elif job.score >= 70 %}s70{% else %}s50{% endif %}">{{ job.score if job.score is not none else '—' }}/100</span>
           <span class="badge {% if job.search_pass == 'ottawa' %}p-ottawa{% elif job.search_pass == 'us_remote' %}p-us_remote{% else %}p-canada{% endif %}">{% if job.search_pass == 'ottawa' %}Ottawa{% elif job.search_pass == 'us_remote' %}US Remote{% else %}Canada{% endif %}</span>
           {% if job.is_remote %}<span class="badge b-remote">Remote</span>{% endif %}
           <span class="badge b-source">{{ job.source }}</span>

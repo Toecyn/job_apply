@@ -1,13 +1,12 @@
-import sqlite3
 import json
 import os
 from anthropic import Anthropic
 from ai_logger import call_claude_with_logging
 from dotenv import load_dotenv
+from db import get_db
 
 load_dotenv()
 
-DB_PATH = "tracker.db"
 RESUME_PATH = "master_resume.json"
 client = Anthropic()
 
@@ -99,9 +98,8 @@ Return ONLY a JSON object with no other text:
 
 
 def score_single_job(job_id):
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    job = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    conn = get_db()
+    job = conn.execute("SELECT * FROM jobs WHERE id = %s", (job_id,)).fetchone()
     conn.close()
 
     if not job:
@@ -120,11 +118,11 @@ def score_single_job(job_id):
     )
 
     if result:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db()
         conn.execute("""
             UPDATE jobs
-            SET score = ?, score_reasons = ?, score_gaps = ?
-            WHERE id = ?
+            SET score = %s, score_reasons = %s, score_gaps = %s
+            WHERE id = %s
         """, (
             result["score"],
             json.dumps(result["reasons"]),
@@ -155,8 +153,7 @@ def is_score_worthy(title, description):
     return any(kw in title_lower for kw in SCORE_WORTHY_TITLES)
 
 def score_all_unscored():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
     jobs = conn.execute("""
         SELECT * FROM jobs
         WHERE score IS NULL
@@ -205,11 +202,11 @@ def score_all_unscored():
         )
 
         if result:
-            conn = sqlite3.connect(DB_PATH)
+            conn = get_db()
             conn.execute("""
                 UPDATE jobs
-                SET score = ?, score_reasons = ?, score_gaps = ?
-                WHERE id = ?
+                SET score = %s, score_reasons = %s, score_gaps = %s
+                WHERE id = %s
             """, (
                 result["score"],
                 json.dumps(result["reasons"]),

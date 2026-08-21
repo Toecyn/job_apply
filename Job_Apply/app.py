@@ -1,20 +1,12 @@
 import json
-import sqlite3
 import os
 from flask import Flask, render_template, jsonify, request, redirect
 from dotenv import load_dotenv
-from scraper import init_db
+from db import get_db
 
 load_dotenv()
 
 app = Flask(__name__)
-DB_PATH = "tracker.db"
-
-
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 
 def get_jobs_data(status="all", market="all", min_score=70, fresh_hours=72):
@@ -22,16 +14,17 @@ def get_jobs_data(status="all", market="all", min_score=70, fresh_hours=72):
     query = "SELECT * FROM jobs WHERE is_stale = 0"
     params = []
     if status != "all":
-        query += " AND status = ?"
+        query += " AND status = %s"
         params.append(status)
     if min_score > 0:
-        query += " AND score >= ?"
+        query += " AND score >= %s"
         params.append(min_score)
     if market != "all":
-        query += " AND search_pass = ?"
+        query += " AND search_pass = %s"
         params.append(market)
     if fresh_hours and fresh_hours > 0:
-        query += f" AND date_found >= datetime('now', '-{fresh_hours} hours')"
+        query += " AND date_found >= to_char(NOW() - %s::interval, 'YYYY-MM-DD HH24:MI:SS')"
+        params.append(f"{fresh_hours} hours")
     query += " ORDER BY score DESC LIMIT 50"
     jobs = conn.execute(query, params).fetchall()
     conn.close()
@@ -55,9 +48,14 @@ def get_stats_data():
         "scored": conn.execute("SELECT COUNT(*) FROM jobs WHERE score IS NOT NULL AND is_stale = 0").fetchone()[0],
         "high_match": conn.execute("SELECT COUNT(*) FROM jobs WHERE score >= 70 AND is_stale = 0").fetchone()[0],
         "applied": conn.execute("SELECT COUNT(*) FROM jobs WHERE status = 'applied'").fetchone()[0],
-        "fresh": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= datetime('now', '-3 days') AND is_stale = 0").fetchone()[0],
-        "fresh_scored": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= datetime('now', '-3 days') AND score >= 70 AND is_stale = 0").fetchone()[0],
-        "canada": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada' AND is_stale = 0").fetchone()[0],        "canada_remote": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada_remote' AND is_stale = 0").fetchone()[0],        "canada_hybrid": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada_hybrid' AND is_stale = 0").fetchone()[0],        "ottawa": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'ottawa' AND is_stale = 0").fetchone()[0],        "us": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'us_remote' AND is_stale = 0").fetchone()[0],        "contract": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'contract' AND is_stale = 0").fetchone()[0],
+        "fresh": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= to_char(NOW() - INTERVAL '3 days', 'YYYY-MM-DD HH24:MI:SS') AND is_stale = 0").fetchone()[0],
+        "fresh_scored": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= to_char(NOW() - INTERVAL '3 days', 'YYYY-MM-DD HH24:MI:SS') AND score >= 70 AND is_stale = 0").fetchone()[0],
+        "canada": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada' AND is_stale = 0").fetchone()[0],
+        "canada_remote": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada_remote' AND is_stale = 0").fetchone()[0],
+        "canada_hybrid": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada_hybrid' AND is_stale = 0").fetchone()[0],
+        "ottawa": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'ottawa' AND is_stale = 0").fetchone()[0],
+        "us": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'us_remote' AND is_stale = 0").fetchone()[0],
+        "contract": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'contract' AND is_stale = 0").fetchone()[0],
     }
     conn.close()
     return stats
@@ -84,21 +82,21 @@ def update_status(job_id):
     valid = ["new", "reviewing", "applied", "interviewing", "rejected", "offer"]
     if new_status in valid:
         conn = get_db()
-        conn.execute("UPDATE jobs SET status = ? WHERE id = ?", (new_status, job_id))
+        conn.execute("UPDATE jobs SET status = %s WHERE id = %s", (new_status, job_id))
 
         # If marking as applied — record company and resume
         if new_status == "applied":
-            job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
+            job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = %s", (job_id,)).fetchone()
             if job:
                 company = job["company"]
                 used_resume = resume_path or job["resume_path"] or ""
                 # Record in applied_companies
                 conn.execute(
-                    "INSERT INTO applied_companies (company, job_id, resume_path, date_applied) VALUES (?, ?, ?, datetime('now'))",
+                    "INSERT INTO applied_companies (company, job_id, resume_path, date_applied) VALUES (%s, %s, %s, to_char(NOW(), 'YYYY-MM-DD HH24:MI:SS'))",
                     (company, job_id, used_resume)
                 )
                 if used_resume:
-                    conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (used_resume, job_id))
+                    conn.execute("UPDATE jobs SET resume_path = %s WHERE id = %s", (used_resume, job_id))
 
         conn.commit()
         conn.close()
@@ -131,7 +129,7 @@ def tailor(job_id):
             if docx.get("success"):
                 # Store resume path against job
                 conn = get_db()
-                conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (docx["path"], job_id))
+                conn.execute("UPDATE jobs SET resume_path = %s WHERE id = %s", (docx["path"], job_id))
                 conn.commit()
                 conn.close()
     except Exception as e:
@@ -153,6 +151,7 @@ def api_jobs():
     min_score = int(request.args.get("min_score", 70))
     fresh_hours = int(request.args.get("fresh_hours", 72))
     jobs = get_jobs_data(status, market, min_score, fresh_hours)
+    return jsonify(jobs)
 
 
 @app.route("/api/jobs/<job_id>/status", methods=["POST"])
@@ -163,18 +162,18 @@ def api_update_status(job_id):
     valid = ["new", "reviewing", "applied", "interviewing", "rejected", "offer"]
     if new_status in valid:
         conn = get_db()
-        conn.execute("UPDATE jobs SET status = ? WHERE id = ?", (new_status, job_id))
+        conn.execute("UPDATE jobs SET status = %s WHERE id = %s", (new_status, job_id))
         if new_status == "applied":
-            job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
+            job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = %s", (job_id,)).fetchone()
             if job:
                 company = job["company"]
                 used_resume = resume_path or job["resume_path"] or ""
                 conn.execute(
-                    "INSERT INTO applied_companies (company, job_id, resume_path, date_applied) VALUES (?, ?, ?, datetime('now'))",
+                    "INSERT INTO applied_companies (company, job_id, resume_path, date_applied) VALUES (%s, %s, %s, to_char(NOW(), 'YYYY-MM-DD HH24:MI:SS'))",
                     (company, job_id, used_resume)
                 )
                 if used_resume:
-                    conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (used_resume, job_id))
+                    conn.execute("UPDATE jobs SET resume_path = %s WHERE id = %s", (used_resume, job_id))
         conn.commit()
         conn.close()
     return jsonify({"success": True})
@@ -184,7 +183,7 @@ def api_update_status(job_id):
 def api_follow_up(job_id):
     """Return fresh roles at the same company posted within 72hrs."""
     conn = get_db()
-    source_job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    source_job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = %s", (job_id,)).fetchone()
     if not source_job:
         conn.close()
         return jsonify([])
@@ -196,11 +195,11 @@ def api_follow_up(job_id):
         SELECT id, title, company, location, score, search_pass,
                date_found, job_url, status, resume_path
         FROM jobs
-        WHERE company = ?
-        AND id != ?
+        WHERE company = %s
+        AND id != %s
         AND status != 'applied'
         AND is_stale = 0
-        AND date_found >= datetime('now', '-3 days')
+        AND date_found >= to_char(NOW() - INTERVAL '3 days', 'YYYY-MM-DD HH24:MI:SS')
         ORDER BY score DESC
         LIMIT 5
     """, (company, job_id)).fetchall()
@@ -226,7 +225,7 @@ def api_reuse_resume(job_id):
         if result.get("success"):
             # Store the new resume path
             conn = get_db()
-            conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (result["path"], job_id))
+            conn.execute("UPDATE jobs SET resume_path = %s WHERE id = %s", (result["path"], job_id))
             conn.commit()
             conn.close()
         return jsonify(result)
@@ -272,7 +271,7 @@ def api_tailor(job_id):
         docx_result = build_tailored_docx(result)
         if docx_result.get("success"):
             conn = get_db()
-            conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (docx_result["path"], job_id))
+            conn.execute("UPDATE jobs SET resume_path = %s WHERE id = %s", (docx_result["path"], job_id))
             conn.commit()
             conn.close()
         result["docx"] = docx_result
@@ -286,11 +285,11 @@ def api_tailor(job_id):
 def governance():
     conn = get_db()
     total_calls = conn.execute("SELECT COUNT(*) FROM ai_calls").fetchone()[0]
-    today_calls = conn.execute("SELECT COUNT(*) FROM ai_calls WHERE timestamp >= date('now')").fetchone()[0]
-    today_cost = conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls WHERE timestamp >= date('now')").fetchone()[0]
-    today_success = conn.execute("SELECT COALESCE(AVG(success),0)*100 FROM ai_calls WHERE timestamp >= date('now')").fetchone()[0]
-    week_calls = conn.execute("SELECT COUNT(*) FROM ai_calls WHERE timestamp >= date('now', '-7 days')").fetchone()[0]
-    week_cost = conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls WHERE timestamp >= date('now', '-7 days')").fetchone()[0]
+    today_calls = conn.execute("SELECT COUNT(*) FROM ai_calls WHERE timestamp >= to_char(CURRENT_DATE, 'YYYY-MM-DD')").fetchone()[0]
+    today_cost = conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls WHERE timestamp >= to_char(CURRENT_DATE, 'YYYY-MM-DD')").fetchone()[0]
+    today_success = conn.execute("SELECT COALESCE(AVG(success),0)*100 FROM ai_calls WHERE timestamp >= to_char(CURRENT_DATE, 'YYYY-MM-DD')").fetchone()[0]
+    week_calls = conn.execute("SELECT COUNT(*) FROM ai_calls WHERE timestamp >= to_char(CURRENT_DATE - INTERVAL '7 days', 'YYYY-MM-DD')").fetchone()[0]
+    week_cost = conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls WHERE timestamp >= to_char(CURRENT_DATE - INTERVAL '7 days', 'YYYY-MM-DD')").fetchone()[0]
     latency = conn.execute("SELECT call_type, ROUND(AVG(latency_ms),0), COUNT(*) FROM ai_calls GROUP BY call_type").fetchall()
     failures = conn.execute("SELECT timestamp, call_type, job_id, error_text FROM ai_calls WHERE success = 0 ORDER BY timestamp DESC LIMIT 5").fetchall()
     recent = conn.execute("SELECT timestamp, call_type, latency_ms, cost_usd, success FROM ai_calls ORDER BY timestamp DESC LIMIT 10").fetchall()
@@ -484,17 +483,17 @@ def api_add_job():
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     conn = get_db()
-    existing = conn.execute("SELECT id FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    existing = conn.execute("SELECT id FROM jobs WHERE id = %s", (job_id,)).fetchone()
     if existing:
         conn.close()
         return jsonify({"error": "Job already exists", "job_id": job_id}), 200
-    
+
     conn.execute("""
         INSERT INTO jobs (
             id, title, company, location, source, job_url,
             description, status, search_pass, is_remote, is_stale,
             date_found, date_posted
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (
         job_id, title, company, location,
         "manual", job_url, description,
@@ -508,7 +507,7 @@ def api_add_job():
         from scorer import score_single_job
         score_single_job(job_id)
         conn = get_db()
-        job = conn.execute("SELECT score FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        job = conn.execute("SELECT score FROM jobs WHERE id = %s", (job_id,)).fetchone()
         conn.close()
         score = job[0] if job else 0
     except Exception as e:
@@ -517,6 +516,7 @@ def api_add_job():
     return jsonify({"success": True, "job_id": job_id, "score": score})
 
 if __name__ == "__main__":
+    from scraper import init_db
     init_db()
     print("\n" + "="*50)
     print("Job Apply Dashboard running at http://127.0.0.1:5001")
