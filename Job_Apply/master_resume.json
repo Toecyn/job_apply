@@ -1,0 +1,618 @@
+{
+  "name": "Rufus Sobayo",
+  "title": "Senior Data & Analytics Professional",
+  "contact": {
+    "phone": "437-452-7620",
+    "email": "holukayodeh@gmail.com",
+    "location": "Montreal, QC"
+  },
+  "summary": "Data analyst with 10 years of experience delivering financial analysis and BI reporting for finance and commercial teams across SaaS, financial services, and telecom. At Docebo, tracked ARR, cohort expansions and contractions, and churn risk signals across the enterprise client base, advising customer success teams on account health. Currently at BMO, generating cross-channel revenue reports and reconciling campaign attribution against finance records for retail investment products, presenting monthly insights to Directors and VPs. Hands-on with SQL including complex joins, window functions, and case expressions across large datasets, Power BI, Tableau, Snowflake, and Salesforce for automated reporting, dashboard development, and financial data modelling.",
+  "core_competencies": [
+    "Financial Analysis & Business Partnering",
+    "SQL Data Modelling & Complex Query Development",
+    "ARR, Churn & Net Revenue Retention Analytics",
+    "Automated Reporting & Pipeline Development",
+    "BI Dashboard Development (Power BI, Tableau)",
+    "SaaS Metrics & Customer Lifecycle Analysis",
+    "Data Storytelling for Finance & Executive Audiences",
+    "Customer Segmentation & LTV/CAC Analysis",
+    "Revenue Forecasting & Trend Analysis",
+    "Budget Planning & Target Setting",
+    "IBM Cognos Analytics & Report Studio",
+    "Data Reconciliation & Discrepancy Investigation",
+    "Stakeholder Reporting & Data Interpretation",
+    "Digital Media Revenue Attribution",
+    "Media Mix Modelling (MMM)",
+    "Ad Hoc Analysis & Business Process Support"
+  ],
+  "technical_stack": [
+    "SQL",
+    "Power BI",
+    "IBM Cognos Analytics",
+    "IBM Cognos Report Studio",
+    "Tableau",
+    "SAS",
+    "Snowflake",
+    "Salesforce",
+    "Python",
+    "AWS Redshift",
+    "Excel / VBA",
+    "SAP IQ",
+    "Alteryx"
+  ],
+  "experience": [
+    {
+      "id": "bmo",
+      "company": "BMO - Bank of Montreal",
+      "title": "Manager, Campaign Analytics",
+      "start": "Sep 2024",
+      "end": "Present",
+      "location": "Ottawa, ON",
+      "industry": "financial_services",
+      "bullets": [
+        {
+          "id": "bmo_1",
+          "text": "Act as the dedicated analytics partner to the retail investment marketing and finance teams at BMO, translating campaign revenue data across Term Deposits, Mutual Funds, and GICs into business narratives that inform targeting strategy, budget decisions, and monthly leadership reviews.",
+          "tags": [
+            "finance_partnership",
+            "revenue_reporting",
+            "stakeholder_reporting",
+            "leadership",
+            "financial_services"
+          ]
+        },
+        {
+          "id": "bmo_2",
+          "text": "Write complex SQL queries using multiple joins, window functions, and case expressions to extract, transform, and aggregate campaign revenue data across branch, digital, and direct channels from multiple source systems, producing clean, audit-ready datasets for finance and leadership reporting.",
+          "tags": [
+            "SQL",
+            "data_extraction",
+            "ETL",
+            "financial_reporting",
+            "complex_queries"
+          ]
+        },
+        {
+          "id": "bmo_3",
+          "text": "Built and maintain Power BI dashboards that give the finance and campaign teams real-time visibility into revenue performance by channel and product, replacing manual reporting processes and reducing time to insight for monthly business reviews.",
+          "tags": [
+            "power_bi",
+            "dashboards",
+            "real_time",
+            "reporting",
+            "automation"
+          ]
+        },
+        {
+          "id": "bmo_4",
+          "text": "Use IBM Cognos Analytics and Power BI together to maintain and distribute recurring revenue and campaign performance reports for sales and marketing stakeholders, ensuring consistent, audit-ready metrics across all reporting outputs.",
+          "tags": [
+            "cognos",
+            "power_bi",
+            "reporting",
+            "stakeholder_reporting",
+            "audit"
+          ]
+        },
+        {
+          "id": "bmo_5",
+          "text": "Work with Salesforce data to track and reconcile campaign-driven revenue across all distribution channels, matching campaign attribution against actual sales outcomes to give leadership a clean picture of what each programme contributed to overall revenue.",
+          "tags": [
+            "salesforce",
+            "reconciliation",
+            "revenue_tracking",
+            "attribution",
+            "CRM"
+          ]
+        },
+        {
+          "id": "bmo_6",
+          "text": "Reconcile campaign attribution against finance records, identifying discrepancies between reported revenue and actual sales outcomes across channels, investigating root causes, and correcting the record before numbers reach senior leadership.",
+          "tags": [
+            "reconciliation",
+            "discrepancy_investigation",
+            "revenue",
+            "data_quality",
+            "finance"
+          ]
+        },
+        {
+          "id": "bmo_7",
+          "text": "Produce governance and regulatory revenue reports covering dollars generated across Term Deposits, Mutual Funds, and GICs, ensuring accuracy and completeness before data reaches compliance teams and senior stakeholders.",
+          "tags": [
+            "governance",
+            "regulatory_reporting",
+            "compliance",
+            "revenue",
+            "financial_services"
+          ]
+        },
+        {
+          "id": "bmo_8",
+          "text": "Introduced treatment vs. control lift measurement across all campaigns, identifying the New to Canada segment as underperforming mid-flight and enabling a budget reallocation that lifted response rate by 2.5%.",
+          "tags": [
+            "lift_measurement",
+            "ab_testing",
+            "campaign_optimisation",
+            "segmentation",
+            "metrics"
+          ]
+        },
+        {
+          "id": "bmo_9",
+          "text": "Present monthly revenue insights and conduct ad hoc financial analysis for Directors and VPs, translating complex SQL output into clear business narratives that surface churn trends, revenue leakage, and budget risks before they impact the bottom line.",
+          "tags": [
+            "stakeholder_reporting",
+            "ad_hoc_analysis",
+            "leadership",
+            "revenue_leakage",
+            "churn"
+          ]
+        },
+        {
+          "id": "bmo_10",
+          "text": "Apply data hygiene processes to every campaign audience build, removing suppression lists, opt-outs, and duplicate records to ensure revenue reporting accuracy before any campaign reaches execution.",
+          "tags": [
+            "data_hygiene",
+            "compliance",
+            "CASL",
+            "data_quality",
+            "audience_management"
+          ]
+        },
+        {
+          "id": "bmo_11",
+          "text": "Manage end-to-end audience builds for 8 concurrent campaigns targeting 6.5M customers, embedding CASL suppression, PIPEDA data controls, and full audit trails into every selection before execution.",
+          "tags": [
+            "compliance",
+            "CASL",
+            "PIPEDA",
+            "data_governance",
+            "scale",
+            "regulated_environment"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "docebo",
+      "company": "Docebo",
+      "title": "Business Insights Analyst",
+      "start": "Jul 2021",
+      "end": "Jun 2023",
+      "location": "Toronto, ON",
+      "industry": "saas",
+      "bullets": [
+        {
+          "id": "docebo_1",
+          "text": "Tracked Annual Recurring Revenue by cohort, measuring expansions, contractions, and churn month over month across the enterprise client base, producing the ARR waterfall reports that gave finance and customer success teams a clear picture of net revenue retention and revenue momentum.",
+          "tags": [
+            "ARR",
+            "churn",
+            "NRR",
+            "cohort_analysis",
+            "SaaS",
+            "revenue_reporting"
+          ]
+        },
+        {
+          "id": "docebo_2",
+          "text": "Monitored and reported on how each enterprise account was performing against ARR expectations, tracking active status, expansion signals, and contraction patterns, giving the finance and customer success teams a reliable, account-level view of revenue health across the client base.",
+          "tags": [
+            "ARR",
+            "account_health",
+            "expansion",
+            "contraction",
+            "SaaS",
+            "finance_partnership"
+          ]
+        },
+        {
+          "id": "docebo_3",
+          "text": "Built automated weekly reporting pipelines using SQL and AWS Redshift, configured with threshold-based alerting that triggered notifications whenever ARR movements or engagement metrics fell outside expected ranges, removing manual monitoring and catching revenue risks before they reached the finance team.",
+          "tags": [
+            "SQL",
+            "AWS_Redshift",
+            "automation",
+            "alerting",
+            "ARR",
+            "pipeline"
+          ]
+        },
+        {
+          "id": "docebo_4",
+          "text": "Partnered with customer success managers to flag accounts showing early churn signals, declining engagement, missed renewals, or contracting ARR, advising the team on how to prioritise outreach and protect net revenue retention before renewals were at risk.",
+          "tags": [
+            "churn",
+            "NRR",
+            "customer_success",
+            "ARR",
+            "retention",
+            "SaaS"
+          ]
+        },
+        {
+          "id": "docebo_5",
+          "text": "Produced self-serve Power BI dashboards for finance, sales, and customer success teams, enabling each function to track ARR, churn, and expansion revenue independently without raising analyst requests.",
+          "tags": [
+            "power_bi",
+            "self_serve",
+            "dashboards",
+            "ARR",
+            "churn",
+            "SaaS"
+          ]
+        },
+        {
+          "id": "docebo_6",
+          "text": "Owned BI reporting for Docebo enterprise SaaS learning platform, tracking learner engagement, course completion, and platform adoption KPIs across client accounts to inform product and customer success decisions.",
+          "tags": [
+            "BI",
+            "reporting",
+            "KPI",
+            "SaaS",
+            "product_analytics",
+            "engagement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rogers",
+      "company": "Rogers Communications",
+      "title": "Senior Analyst, Customer Insights & Analytics",
+      "start": "Jul 2017",
+      "end": "Jul 2021",
+      "location": "Toronto, ON",
+      "industry": "telecom",
+      "bullets": [
+        {
+          "id": "rogers_1",
+          "text": "Built and maintained weekly sales performance reports for Rogers retail store managers, breaking down activations, handset upgrades (HUP), and plan mix across postpaid and prepaid lines by device type and by sales agent, giving managers the numbers they needed to coach their teams and close the gap on monthly revenue targets.",
+          "tags": [
+            "sales_reporting",
+            "KPI",
+            "revenue",
+            "retail_analytics",
+            "stakeholder_reporting"
+          ]
+        },
+        {
+          "id": "rogers_2",
+          "text": "Produced weekly and monthly subscriber revenue forecasts tracking gross additions, net additions, churn, and ARPU across 3.5M prepaid and postpaid subscribers for Rogers and Fido, using complex SQL joins, window functions, and case expressions across multiple source systems to produce clean, reliable datasets for finance and leadership reporting.",
+          "tags": [
+            "revenue_forecasting",
+            "SQL",
+            "churn",
+            "ARPU",
+            "subscriber_analytics",
+            "scale"
+          ]
+        },
+        {
+          "id": "rogers_3",
+          "text": "Calculated subscriber LTV and CAC by combining ARPU with average tenure, 3 years for single-product subscribers and 5 or more years for connected home customers with multiple products, against a cost per activation averaging $38 across retail and digital channels, giving finance and marketing a clear picture of which acquisition channels generated the most valuable long-term revenue.",
+          "tags": [
+            "LTV",
+            "CAC",
+            "ARPU",
+            "revenue_analytics",
+            "financial_analysis",
+            "telecom"
+          ]
+        },
+        {
+          "id": "rogers_4",
+          "text": "Budget planning and target setting: worked with the customer base management team to translate historical activation, churn, and HUP trends into forward-looking revenue projections that informed budget setting and resource allocation across retail channels each period.",
+          "tags": [
+            "budget_planning",
+            "target_setting",
+            "revenue_forecasting",
+            "planning",
+            "financial_analysis"
+          ]
+        },
+        {
+          "id": "rogers_5",
+          "text": "Built and interpreted Media Mix Models in SAS to measure the revenue contribution of each media channel, quantifying how TV, digital, and out-of-home spend drove subscriber acquisition. Moved to vendor MMM tools over time, interpreting model outputs and presenting investment recommendations directly to senior leadership.",
+          "tags": [
+            "MMM",
+            "media_mix_modelling",
+            "SAS",
+            "attribution",
+            "media_ROI",
+            "leadership"
+          ]
+        },
+        {
+          "id": "rogers_6",
+          "text": "Owned digital media revenue attribution reporting across Facebook, Google, and SEO platforms, producing weekly reports showing cost of media versus revenue driven per channel, enabling the marketing team to reallocate budget toward the platforms generating the strongest return.",
+          "tags": [
+            "digital_attribution",
+            "media_ROI",
+            "facebook",
+            "google",
+            "SEO",
+            "revenue_reporting"
+          ]
+        },
+        {
+          "id": "rogers_7",
+          "text": "Used IBM Cognos Report Studio and Cognos Analytics alongside Power BI to build self-serve dashboards, enabling sales and retail operations teams to monitor subscriber KPIs daily and conduct their own ad hoc analysis without routing requests through the analytics function.",
+          "tags": [
+            "cognos",
+            "power_bi",
+            "self_serve",
+            "dashboards",
+            "KPI",
+            "subscriber_analytics"
+          ]
+        },
+        {
+          "id": "rogers_8",
+          "text": "Investigated and reconciled data discrepancies across reporting systems, drilling through source data to identify root causes such as delayed system updates, missing channel feeds, or under-reported regional figures, then flagged recurring issues to prevent them affecting future revenue reports.",
+          "tags": [
+            "reconciliation",
+            "data_quality",
+            "discrepancy_investigation",
+            "reporting",
+            "SQL"
+          ]
+        },
+        {
+          "id": "rogers_9",
+          "text": "Served as the go-to resource for non-technical stakeholders on dashboard interpretation, report logic, and data extraction, guiding store managers and marketing leads through business process understanding, how to read KPIs, export figures, and translate data into sales decisions.",
+          "tags": [
+            "stakeholder_support",
+            "training",
+            "dashboards",
+            "KPI",
+            "business_process"
+          ]
+        },
+        {
+          "id": "rogers_10",
+          "text": "Built store and web traffic forecasting models using SAS, presented findings to senior management, and fed outputs directly into retail staffing plans and media budget allocation across Rogers and Fido channels.",
+          "tags": [
+            "forecasting",
+            "SAS",
+            "modelling",
+            "retail_analytics",
+            "leadership",
+            "staffing"
+          ]
+        },
+        {
+          "id": "rogers_11",
+          "text": "Built the measurement and reporting framework for Fido next best offer programme, giving call centre agents visibility into each customer's device history, tenure, and usage to match them to the right upgrade offer, with conversion tracked end to end.",
+          "tags": [
+            "NBO",
+            "CRM",
+            "measurement",
+            "conversion_tracking",
+            "personalisation",
+            "telecom"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nestle",
+      "company": "Nestle - Nespresso",
+      "title": "CRM Data Analyst",
+      "start": "Jul 2015",
+      "end": "Jul 2017",
+      "location": "London, UK",
+      "industry": "retail",
+      "bullets": [
+        {
+          "id": "nestle_1",
+          "text": "Used IBM Cognos Analytics to extract and analyse customer transaction and sales data from the Nespresso Club database, producing recurring sales performance reports and ad hoc data pulls for the commercial and marketing teams.",
+          "tags": [
+            "cognos",
+            "data_extraction",
+            "sales_reporting",
+            "CRM",
+            "retail"
+          ]
+        },
+        {
+          "id": "nestle_2",
+          "text": "Applied RFM analysis to segment the Nespresso Club customer database by recency, frequency, and monetary value, identifying high-value loyalists, at-risk customers, and dormant buyers. The segmentation fed directly into retention and reactivation targeting, improving campaign ROI by concentrating spend on segments most likely to generate revenue.",
+          "tags": [
+            "RFM",
+            "segmentation",
+            "LTV",
+            "retention",
+            "campaign_analytics",
+            "CRM"
+          ]
+        },
+        {
+          "id": "nestle_3",
+          "text": "Used Market Basket Analysis to uncover product affinity patterns across the capsule range, identifying which coffee variants customers bought together and in what sequence. Findings informed cross-sell recommendations and promotional bundles, contributing to higher average order value and cross-sell revenue.",
+          "tags": [
+            "market_basket_analysis",
+            "cross_sell",
+            "revenue",
+            "product_analytics",
+            "retail"
+          ]
+        },
+        {
+          "id": "nestle_4",
+          "text": "Proactively identified revenue leakage patterns in partner channel sales data, flagging underperforming regions, missing channel feeds, and pricing anomalies before they affected quarterly revenue reporting, and presented findings to commercial leadership with concrete recommendations to close the gaps.",
+          "tags": [
+            "revenue_leakage",
+            "data_quality",
+            "reconciliation",
+            "channel_analytics",
+            "leadership"
+          ]
+        },
+        {
+          "id": "nestle_5",
+          "text": "Built a quarterly sales performance dashboard in Tableau tracking revenue pipeline across partner channels, contributing to the identification of GBP 1.2M in additional revenue opportunity. Ran post-campaign analysis using SQL and SAS measuring response rates, ROI, and incremental uplift, feeding results back as recommendations for the next campaign cycle.",
+          "tags": [
+            "Tableau",
+            "dashboards",
+            "revenue",
+            "campaign_analytics",
+            "ROI",
+            "SQL",
+            "SAS"
+          ]
+        },
+        {
+          "id": "nestle_6",
+          "text": "Served as the central analytics point of contact for prospect, customer, and digital KPIs, guiding commercial leads through how to read performance metrics, export figures, and translate data into decisions.",
+          "tags": [
+            "stakeholder_support",
+            "KPI",
+            "CRM",
+            "reporting",
+            "commercial_analytics"
+          ]
+        }
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Master of Business Administration (MBA)",
+      "institution": "Heriot-Watt University",
+      "location": "Edinburgh, UK",
+      "year": "2014"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "ICAgile Certified Professional (ICP)",
+      "issuer": "ICAgile",
+      "year": "2020"
+    }
+  ],
+  "job_search_config": {
+    "target_titles": [
+      "Senior Data Analyst",
+      "Senior BI Analyst",
+      "Power BI Analyst",
+      "Senior Reporting Analyst",
+      "Campaign Analytics Manager",
+      "Marketing Analytics Analyst",
+      "Senior Campaign Analyst",
+      "Customer Analytics Analyst",
+      "CRM Analyst",
+      "Senior Analytics Analyst",
+      "Business Intelligence Analyst",
+      "Data and Reporting Analyst",
+      "Performance Measurement Analyst",
+      "Loyalty Analytics Analyst",
+      "Senior Marketing Analyst",
+      "Data Analyst Finance",
+      "Revenue Analytics Analyst",
+      "Financial Data Analyst"
+    ],
+    "exclude_keywords": [
+      "engineer",
+      "scientist",
+      "security",
+      "IAM",
+      "junior",
+      "associate",
+      "java",
+      "devops",
+      "infrastructure",
+      "cloud architect",
+      "machine learning",
+      "mlops",
+      "network",
+      "software",
+      "developer",
+      "intelligence analyst",
+      "fraud investigator",
+      "actuary",
+      "underwriter"
+    ],
+    "target_industries": [
+      "financial_services",
+      "banking",
+      "insurance",
+      "retail",
+      "ecommerce",
+      "fmcg",
+      "telecom",
+      "saas",
+      "consulting",
+      "government",
+      "media"
+    ],
+    "open_to_remote": true,
+    "open_to_hybrid": true,
+    "open_to_us_remote": true,
+    "tn_visa_eligible": true,
+    "tn_visa_note": "Canadian citizen eligible for US TN visa under CUSMA for Systems Analyst category. Work authorization obtainable at port of entry.",
+    "preferred_locations": [
+      "Ottawa, ON",
+      "Toronto, ON",
+      "Montreal, QC",
+      "Waterloo, ON",
+      "Mississauga, ON",
+      "Vancouver, BC",
+      "Calgary, AB",
+      "Remote, Canada",
+      "Remote",
+      "New York, NY",
+      "Chicago, IL",
+      "San Francisco, CA",
+      "Boston, MA",
+      "Seattle, WA",
+      "Austin, TX"
+    ],
+    "minimum_score": 70,
+    "keywords": [
+      "SQL",
+      "SAS",
+      "Python",
+      "Power BI",
+      "Tableau",
+      "IBM Cognos",
+      "Cognos Analytics",
+      "Cognos Report Studio",
+      "Excel",
+      "Snowflake",
+      "Salesforce",
+      "campaign analytics",
+      "customer segmentation",
+      "CRM",
+      "marketing analytics",
+      "BI",
+      "reporting",
+      "dashboards",
+      "churn",
+      "retention",
+      "forecasting",
+      "loyalty",
+      "ARR",
+      "NRR",
+      "LTV",
+      "CAC",
+      "SaaS metrics",
+      "revenue analytics",
+      "financial analysis",
+      "finance partner",
+      "retail analytics",
+      "financial services",
+      "insights",
+      "data analyst",
+      "senior analyst",
+      "analytics manager",
+      "revenue reporting",
+      "budget planning",
+      "data modelling",
+      "MMM",
+      "media mix modelling",
+      "attribution"
+    ]
+  }
+}

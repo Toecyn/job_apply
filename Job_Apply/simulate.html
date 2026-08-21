@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Simulator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; color: #1a1a1a; }
+header { background: #1F4E79; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+header h1 { font-size: 18px; font-weight: 600; }
+.nav { display: flex; gap: 12px; }
+.nav a { color: white; text-decoration: none; font-size: 13px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; }
+.nav a.active { background: rgba(255,255,255,0.2); }
+.nav a:hover { background: rgba(255,255,255,0.1); }
+.page { padding: 24px; max-width: 900px; margin: 0 auto; }
+.company-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 28px; }
+.company-card { background: white; border: 2px solid #e5e5e5; border-radius: 10px; padding: 18px 20px; cursor: pointer; }
+.company-card:hover { border-color: #1F4E79; }
+.company-card.active { border-color: #1F4E79; background: #e8f0f7; }
+.company-name { font-size: 16px; font-weight: 700; color: #1F4E79; margin-bottom: 4px; }
+.company-role { font-size: 12px; color: #666; margin-bottom: 10px; }
+.company-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.ctag { padding: 2px 8px; background: #f0f0f0; border-radius: 4px; font-size: 11px; color: #444; }
+.company-card.active .ctag { background: #d0e4f7; color: #1F4E79; }
+.framing-box { background: white; border-radius: 10px; border: 1px solid #e5e5e5; padding: 20px; margin-bottom: 20px; display: none; }
+.framing-box.open { display: block; }
+.framing-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 8px; }
+.framing-text { font-size: 13px; color: #444; line-height: 1.6; background: #fff8e1; padding: 12px; border-radius: 6px; border-left: 3px solid #f59e0b; margin-bottom: 12px; }
+.follow-up-text { font-size: 13px; color: #555; line-height: 1.6; background: #f0f4ff; padding: 10px 12px; border-radius: 6px; border-left: 3px solid #1F4E79; }
+.simulator { background: white; border-radius: 10px; border: 1px solid #e5e5e5; overflow: hidden; display: none; }
+.simulator.open { display: block; }
+.sim-header { background: #1F4E79; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+.sim-header h3 { color: white; font-size: 15px; font-weight: 600; }
+.sim-controls { display: flex; gap: 8px; }
+.btn-sm { padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; border: none; font-weight: 500; }
+.btn-new { background: rgba(255,255,255,0.2); color: white; }
+.btn-skill { background: #f59e0b; color: white; }
+.question-box { padding: 24px; border-bottom: 1px solid #f0f0f0; }
+.q-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 10px; }
+.question-text { font-size: 15px; color: #1a1a1a; line-height: 1.6; font-weight: 500; background: #f8f9fa; padding: 16px; border-radius: 8px; border-left: 4px solid #1F4E79; }
+.follow-up-hint { font-size: 12px; color: #856404; background: #fff3cd; padding: 8px 12px; border-radius: 6px; margin-top: 10px; }
+.answer-box { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; }
+.answer-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 8px; }
+textarea { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 120px; line-height: 1.6; }
+textarea:focus { outline: none; border-color: #1F4E79; }
+.answer-actions { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+.btn-submit { background: #1F4E79; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-show-star { background: white; color: #1F4E79; border: 1px solid #1F4E79; padding: 10px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.hint-text { font-size: 12px; color: #888; }
+.feedback-box { padding: 20px 24px; display: none; }
+.feedback-box.open { display: block; }
+.fb-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 8px; }
+.fb-score { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.score-circle { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; }
+.score-90 { background: #e6f4ea; color: #1e7e34; }
+.score-70 { background: #fff3cd; color: #856404; }
+.score-50 { background: #fde8e8; color: #c0392b; }
+.fb-verdict { font-size: 14px; color: #333; line-height: 1.6; }
+.fb-strong { background: #e8f5e9; border-radius: 6px; padding: 12px; margin-bottom: 10px; border-left: 3px solid #1e7e34; font-size: 13px; color: #333; line-height: 1.6; }
+.fb-improve { background: #fff3cd; border-radius: 6px; padding: 12px; margin-bottom: 10px; border-left: 3px solid #856404; font-size: 13px; color: #333; line-height: 1.6; }
+.fb-model { background: #f0f4ff; border-radius: 6px; padding: 12px; border-left: 3px solid #1F4E79; font-size: 13px; color: #333; line-height: 1.6; }
+.star-answer-box { background: #e8f5e9; border-radius: 6px; padding: 14px; border-left: 3px solid #1e7e34; font-size: 13px; color: #333; line-height: 1.7; display: none; margin-top: 10px; }
+.star-answer-box.open { display: block; }
+.next-actions { display: flex; gap: 10px; margin-top: 16px; }
+.btn-next { background: #1F4E79; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-harder { background: #c0392b; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 60px 24px; color: #888; }
+.empty-state h3 { font-size: 16px; margin-bottom: 8px; color: #444; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Interview Simulator</h1>
+  <div class="nav">
+    <a href="/">Jobs</a>
+    <a href="/governance">Governance</a>
+    <a href="/skills">Skills</a>
+    <a href="/simulate" class="active">Simulate</a>
+  </div>
+</header>
+<div class="page">
+  <div class="company-grid">
+    {% for company in companies %}
+    <div class="company-card" id="co-{{ company.id }}" onclick="selectCompany('{{ company.id }}')">
+      <div class="company-name">{{ company.name }}</div>
+      <div class="company-role">{{ company.role }}</div>
+      <div class="company-tags">
+        {% for item in company.what_they_care_about[:3] %}
+        <span class="ctag">{{ item[:30] }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="framing-box" id="framing-box">
+    <div class="framing-label">How this company thinks</div>
+    <div class="framing-text" id="framing-text"></div>
+    <div class="framing-label">Their follow-up pattern</div>
+    <div class="follow-up-text" id="follow-up-text"></div>
+  </div>
+  <div class="simulator" id="simulator">
+    <div class="sim-header">
+      <h3 id="sim-title">Interview Question</h3>
+      <div class="sim-controls">
+        <button class="btn-sm btn-skill" onclick="getSkillQuestion()">From my skills</button>
+        <button class="btn-sm btn-new" onclick="getNewQuestion()">New question</button>
+      </div>
+    </div>
+    <div class="question-box">
+      <div class="q-label">Question</div>
+      <div class="question-text" id="question-text">Click a button above to get your first question</div>
+      <div class="follow-up-hint" id="follow-up-hint" style="display:none"></div>
+    </div>
+    <div class="answer-box">
+      <div class="answer-label">Your answer</div>
+      <textarea id="answer-input" placeholder="Type your answer. Use STAR format — Situation, Task, Action, Result. Aim for 2-4 minutes spoken."></textarea>
+      <div class="answer-actions">
+        <button class="btn-submit" id="btn-submit" onclick="submitAnswer()">Get feedback</button>
+        <button class="btn-show-star" id="btn-star" onclick="showStar()" style="display:none">Show STAR answer</button>
+        <span class="hint-text" id="hint-text"></span>
+      </div>
+      <div class="star-answer-box" id="star-answer-box"></div>
+    </div>
+    <div class="feedback-box" id="feedback-box">
+      <div class="fb-label">Feedback from <span id="fb-company-name"></span> perspective</div>
+      <div class="fb-score">
+        <div class="score-circle" id="score-circle">-</div>
+        <div class="fb-verdict" id="fb-verdict"></div>
+      </div>
+      <div class="fb-label">What was strong</div>
+      <div class="fb-strong" id="fb-strong"></div>
+      <div class="fb-label">What to improve</div>
+      <div class="fb-improve" id="fb-improve"></div>
+      <div class="fb-label">Model answer for this company</div>
+      <div class="fb-model" id="fb-model"></div>
+      <div class="next-actions">
+        <button class="btn-next" onclick="getNewQuestion()">Next question</button>
+        <button class="btn-harder" onclick="getHarderQuestion()">Make it harder</button>
+      </div>
+    </div>
+  </div>
+  <div class="empty-state" id="empty-state">
+    <h3>Select a company to start</h3>
+    <p>Each company has a different framing and follow-up pattern. Pick one and practice until the answers feel natural.</p>
+  </div>
+</div>
+<script>
+var currentCompany = null;
+var currentQuestion = null;
+var currentSkillId = null;
+var allCompanies = {{ companies | tojson }};
+function selectCompany(id) {
+  document.querySelectorAll('.company-card').forEach(function(c){ c.classList.remove('active'); });
+  document.getElementById('co-' + id).classList.add('active');
+  currentCompany = allCompanies.find(function(c){ return c.id === id; });
+  document.getElementById('framing-text').textContent = currentCompany.framing;
+  document.getElementById('follow-up-text').textContent = currentCompany.follow_up_pattern;
+  document.getElementById('framing-box').classList.add('open');
+  document.getElementById('simulator').classList.add('open');
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('sim-title').textContent = currentCompany.name + ' — Interview Simulator';
+  document.getElementById('feedback-box').classList.remove('open');
+  document.getElementById('fb-company-name').textContent = currentCompany.name;
+  resetAnswer();
+}
+function getNewQuestion() {
+  if (!currentCompany) return;
+  currentSkillId = null;
+  var questions = currentCompany.hard_questions;
+  var q = questions[Math.floor(Math.random() * questions.length)];
+  setQuestion(q, null);
+}
+function getSkillQuestion() {
+  if (!currentCompany) {
+    alert('Please select a company first');
+    return;
+  }
+  console.log('Fetching skill question for company:', currentCompany.id);
+  fetch('/api/simulate/question?company=' + currentCompany.id)
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      console.log('Skill question response:', data);
+      if (data.error) { alert('Error: ' + data.error); return; }
+      if (data.question) {
+        currentSkillId = data.skill_id || null;
+        setQuestion(data.question, data.star_answer || null);
+        if (data.skill_concept) document.getElementById('hint-text').textContent = 'Skill: ' + data.skill_concept;
+        // Auto-show STAR answer so you know what you actually did
+        if (data.star_answer) {
+          var starBox = document.getElementById('star-answer-box');
+          starBox.classList.add('open');
+          document.getElementById('btn-star').textContent = 'Hide STAR answer';
+        }
+      }
+    })
+    .catch(function(e){ console.error('Fetch error:', e); alert('Request failed: ' + e.message); });
+}
+function getHarderQuestion() {
+  if (!currentCompany || !currentQuestion) return;
+  fetch('/api/simulate/harder', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({company_id: currentCompany.id, original_question: currentQuestion})
+  }).then(function(r){ return r.json(); }).then(function(data){
+    if (data.question) setQuestion(data.question, null);
+  });
+}
+function setQuestion(q, starAnswer) {
+  currentQuestion = q;
+  document.getElementById('question-text').textContent = q;
+  document.getElementById('follow-up-hint').textContent = 'Follow-up pattern: ' + currentCompany.follow_up_pattern;
+  document.getElementById('follow-up-hint').style.display = 'block';
+  document.getElementById('feedback-box').classList.remove('open');
+  document.getElementById('star-answer-box').classList.remove('open');
+  document.getElementById('star-answer-box').textContent = '';
+  resetAnswer();
+  if (starAnswer) {
+    document.getElementById('btn-star').style.display = 'inline-block';
+    document.getElementById('star-answer-box').textContent = starAnswer;
+  } else {
+    document.getElementById('btn-star').style.display = 'none';
+  }
+}
+function showStar() {
+  var box = document.getElementById('star-answer-box');
+  box.classList.toggle('open');
+  document.getElementById('btn-star').textContent = box.classList.contains('open') ? 'Hide STAR answer' : 'Show STAR answer';
+}
+function resetAnswer() {
+  document.getElementById('answer-input').value = '';
+  document.getElementById('btn-submit').disabled = false;
+  document.getElementById('btn-submit').textContent = 'Get feedback';
+  document.getElementById('hint-text').textContent = '';
+}
+function submitAnswer() {
+  var answer = document.getElementById('answer-input').value.trim();
+  if (!answer || answer.length < 20) { alert('Please write a more complete answer.'); return; }
+  if (!currentQuestion) { alert('Please select a question first.'); return; }
+  var btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Analysing...';
+  document.getElementById('feedback-box').classList.remove('open');
+  fetch('/api/simulate/feedback', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({company_id: currentCompany.id, question: currentQuestion, answer: answer, skill_id: currentSkillId})
+  }).then(function(r){ return r.json(); }).then(function(data){
+    btn.disabled = false; btn.textContent = 'Get feedback';
+    if (data.error) { alert('Error: ' + data.error); return; }
+    var score = data.score || 0;
+    var circle = document.getElementById('score-circle');
+    circle.textContent = score;
+    circle.className = 'score-circle ' + (score >= 80 ? 'score-90' : score >= 60 ? 'score-70' : 'score-50');
+    document.getElementById('fb-verdict').textContent = data.verdict || '';
+    document.getElementById('fb-strong').textContent = data.strong || '';
+    document.getElementById('fb-improve').textContent = data.improve || '';
+    document.getElementById('fb-model').textContent = data.model_answer || '';
+    document.getElementById('feedback-box').classList.add('open');
+    document.getElementById('feedback-box').scrollIntoView({behavior:'smooth',block:'start'});
+  }).catch(function(e){ btn.disabled = false; btn.textContent = 'Get feedback'; alert('Failed. Try again.'); });
+}
+</script>
+</body>
+</html>

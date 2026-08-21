@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skills & Interview Prep</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; color: #1a1a1a; }
+header { background: #1F4E79; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+header h1 { font-size: 18px; font-weight: 600; }
+.nav { display: flex; gap: 12px; }
+.nav a { color: white; text-decoration: none; font-size: 13px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; }
+.nav a:hover { background: rgba(255,255,255,0.1); }
+.nav a.active { background: rgba(255,255,255,0.2); }
+.page { padding: 24px; max-width: 960px; margin: 0 auto; }
+.hero { background: white; border-radius: 10px; padding: 24px; margin-bottom: 24px; border: 1px solid #e5e5e5; }
+.hero h2 { font-size: 16px; font-weight: 600; color: #1F4E79; margin-bottom: 8px; }
+.hero p { font-size: 13px; color: #555; line-height: 1.6; }
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.stat { background: white; border-radius: 8px; padding: 16px; border: 1px solid #e5e5e5; text-align: center; }
+.stat .num { font-size: 28px; font-weight: 700; color: #1F4E79; }
+.stat .lbl { font-size: 12px; color: #666; margin-top: 4px; }
+.filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #ddd; background: white; font-size: 12px; cursor: pointer; color: #444; }
+.filter-btn:hover { border-color: #1F4E79; color: #1F4E79; }
+.filter-btn.active { background: #1F4E79; color: white; border-color: #1F4E79; }
+.skill-card { background: white; border-radius: 10px; border: 1px solid #e5e5e5; margin-bottom: 16px; overflow: hidden; }
+.skill-card:hover { border-color: #1F4E79; }
+.skill-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.skill-left { flex: 1; }
+.skill-what { font-size: 13px; color: #555; margin-bottom: 8px; line-height: 1.5; }
+.skill-concept { font-size: 15px; font-weight: 600; color: #1F4E79; margin-bottom: 6px; }
+.skill-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { padding: 2px 8px; background: #e8f0f7; color: #1F4E79; border-radius: 4px; font-size: 11px; }
+.skill-right { flex-shrink: 0; text-align: right; }
+.source { font-size: 11px; color: #999; margin-bottom: 6px; }
+.expand-btn { font-size: 20px; color: #1F4E79; cursor: pointer; background: none; border: none; padding: 0; }
+.skill-body { display: none; border-top: 1px solid #f0f0f0; }
+.skill-body.open { display: block; }
+.skill-section { padding: 16px 20px; border-bottom: 1px solid #f5f5f5; }
+.skill-section:last-child { border-bottom: none; }
+.section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 8px; }
+.concept-explanation { font-size: 13px; color: #444; line-height: 1.6; background: #f8f9fa; padding: 12px; border-radius: 6px; border-left: 3px solid #1F4E79; }
+.question-list { list-style: none; }
+.question-list li { font-size: 13px; color: #333; padding: 8px 12px; background: #fff3cd; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid #856404; }
+.star-answer { font-size: 13px; color: #333; line-height: 1.7; background: #e8f5e9; padding: 14px; border-radius: 6px; border-left: 3px solid #1e7e34; }
+.ask-btn { margin-top: 10px; background: #1F4E79; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.ask-btn:hover { background: #174069; }
+.ai-response { margin-top: 10px; background: #f8f9fa; border-radius: 6px; padding: 12px; font-size: 13px; color: #333; line-height: 1.6; display: none; }
+.ai-response.open { display: block; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #e5e5e5; border-top-color: #1F4E79; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { text-align: center; padding: 60px; color: #888; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Skills and Interview Prep</h1>
+  <div class="nav">
+    <a href="/">Jobs</a>
+    <a href="/governance">Governance</a>
+    <a href="/skills" class="active">Skills</a>
+    <a href="/simulate">Simulate</a>
+  </div>
+</header>
+<div class="page">
+  <div class="hero">
+    <h2>What you built — what it means — how to answer it</h2>
+    <p>Every fix, every improvement, every operational decision you made while building this system maps to a real enterprise AI concept. This page surfaces those connections so you can walk into any interview and answer with specifics, not generics.</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat">
+      <div class="num">{{ skills|length }}</div>
+      <div class="lbl">Skills demonstrated</div>
+    </div>
+    <div class="stat">
+      <div class="num">{{ questions_count }}</div>
+      <div class="lbl">Interview questions covered</div>
+    </div>
+    <div class="stat">
+      <div class="num">{{ concepts_count }}</div>
+      <div class="lbl">Enterprise concepts</div>
+    </div>
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterSkills('all', this)">All</button>
+    {% for concept in concepts %}
+    <button class="filter-btn" onclick="filterSkills('{{ loop.index }}', this)" data-concept="{{ loop.index }}">{{ concept }}</button>
+    {% endfor %}
+  </div>
+  <div id="skills-list">
+    {% for skill in skills %}
+    <div class="skill-card" id="skill-{{ skill.id }}">
+      <div class="skill-header" onclick="toggleSkill('{{ skill.id }}')">
+        <div class="skill-left">
+          <div class="skill-concept">{{ skill.enterprise_concept }}</div>
+          <div class="skill-what">{{ skill.what_you_did }}</div>
+          <div class="skill-tags">
+            {% for tag in skill.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="skill-right">
+          <div class="source">{{ skill.source }}</div>
+          <button class="expand-btn" id="expand-{{ skill.id }}">+</button>
+        </div>
+      </div>
+      <div class="skill-body" id="body-{{ skill.id }}">
+        <div class="skill-section">
+          <div class="section-label">Why this matters in enterprise AI</div>
+          <div class="concept-explanation">{{ skill.concept_explanation }}</div>
+        </div>
+        <div class="skill-section">
+          <div class="section-label">Interview questions this answers</div>
+          <ul class="question-list">
+            {% for q in skill.interview_questions %}
+            <li>{{ q }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="skill-section">
+          <div class="section-label">Your answer in STAR format</div>
+          <div class="star-answer">{{ skill.star_answer }}</div>
+          <button class="ask-btn" onclick="refineAnswer('{{ skill.id }}')">Ask Claude to refine this answer</button>
+          <div class="ai-response" id="ai-{{ skill.id }}"></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% if not skills %}
+    <div class="empty">No skills recorded yet. Every fix you make to this system will appear here.</div>
+    {% endif %}
+  </div>
+</div>
+<script>
+function toggleSkill(id) {
+  var body = document.getElementById('body-' + id);
+  var btn = document.getElementById('expand-' + id);
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '+' : '-';
+}
+function filterSkills(tag, btn) {
+  document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.skill-card').forEach(function(card) {
+    card.style.display = tag === 'all' ? 'block' : 'none';
+  });
+  if (tag !== 'all') {
+    var concept = btn.getAttribute('data-concept');
+    document.querySelectorAll('.skill-card').forEach(function(card, idx) {
+      if (String(idx + 1) === concept) card.style.display = 'block';
+    });
+  }
+}
+function refineAnswer(skillId) {
+  var aiDiv = document.getElementById('ai-' + skillId);
+  var btn = document.querySelector('#skill-' + skillId + ' .ask-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Refining...';
+  fetch('/api/skills/' + skillId + '/refine', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.refined) {
+        aiDiv.innerHTML = '<strong>Refined answer:</strong><br><br>' + data.refined;
+        aiDiv.classList.add('open');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Ask Claude to refine this answer';
+    })
+    .catch(function(e) {
+      btn.disabled = false;
+      btn.textContent = 'Try again';
+    });
+}
+</script>
+</body>
+</html>

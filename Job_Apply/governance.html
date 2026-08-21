@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Governance Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; color: #1a1a1a; }
+header { background: #1F4E79; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+header h1 { font-size: 18px; font-weight: 600; }
+.nav { display: flex; gap: 12px; }
+.nav a { color: white; text-decoration: none; font-size: 13px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; }
+.nav a:hover { background: rgba(255,255,255,0.1); }
+.page { padding: 24px; }
+.section-title { font-size: 13px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; margin-top: 24px; }
+.cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 8px; }
+.cards2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+.card { background: white; border-radius: 8px; padding: 18px 20px; border: 1px solid #e5e5e5; }
+.card .num { font-size: 28px; font-weight: 700; color: #1F4E79; margin-bottom: 4px; }
+.card .lbl { font-size: 12px; color: #666; }
+.card .sub { font-size: 11px; color: #999; margin-top: 4px; }
+.green { color: #1e7e34 !important; }
+.amber { color: #856404 !important; }
+.red { color: #c0392b !important; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; background: #f8f9fa; border-bottom: 2px solid #e5e5e5; font-weight: 600; color: #444; font-size: 12px; }
+td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; color: #333; }
+tr:hover td { background: #f8f9fa; }
+.table-card { background: white; border-radius: 8px; border: 1px solid #e5e5e5; overflow: hidden; margin-bottom: 16px; }
+.table-header { padding: 14px 16px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center; }
+.table-header h3 { font-size: 14px; font-weight: 600; }
+.badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.b-score { background: #e8f0f7; color: #1F4E79; }
+.b-tailor { background: #f0e8ff; color: #6b35c7; }
+.b-intake { background: #fff3cd; color: #856404; }
+.b-success { background: #e6f4ea; color: #1e7e34; }
+.b-fail { background: #fde8e8; color: #c0392b; }
+.empty { padding: 24px; text-align: center; color: #888; font-size: 13px; }
+.cost { font-family: monospace; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AI Governance Dashboard</h1>
+  <div class="nav">
+    <a href="/">Job Dashboard</a>
+    <a href="/governance">Governance</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="section-title">Today</div>
+  <div class="cards">
+    <div class="card">
+      <div class="num">{{ today_calls }}</div>
+      <div class="lbl">AI calls today</div>
+    </div>
+    <div class="card">
+      <div class="num cost">${{ today_cost }}</div>
+      <div class="lbl">Cost today (USD)</div>
+    </div>
+    <div class="card">
+      <div class="num {% if today_success >= 95 %}green{% elif today_success >= 80 %}amber{% else %}red{% endif %}">{{ today_success }}%</div>
+      <div class="lbl">Success rate today</div>
+    </div>
+  </div>
+
+  <div class="section-title">This week</div>
+  <div class="cards2">
+    <div class="card">
+      <div class="num">{{ week_calls }}</div>
+      <div class="lbl">Total AI calls this week</div>
+      <div class="sub">{{ total_calls }} all time</div>
+    </div>
+    <div class="card">
+      <div class="num cost">${{ week_cost }}</div>
+      <div class="lbl">Total cost this week (USD)</div>
+    </div>
+  </div>
+
+  <div class="section-title">Performance by call type</div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Call type</th>
+          <th>Avg latency (ms)</th>
+          <th>Total calls</th>
+          <th>Est. cost per call</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in latency %}
+        <tr>
+          <td><span class="badge {% if row[0] == 'score' %}b-score{% elif row[0] == 'tailor' %}b-tailor{% else %}b-intake{% endif %}">{{ row[0] }}</span></td>
+          <td>{{ row[1] }}ms</td>
+          <td>{{ row[2] }}</td>
+          <td class="cost">—</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">No calls recorded yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Recent AI calls</div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Type</th>
+          <th>Latency</th>
+          <th>Cost</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in recent %}
+        <tr>
+          <td>{{ row[0] }}</td>
+          <td><span class="badge {% if row[1] == 'score' %}b-score{% elif row[1] == 'tailor' %}b-tailor{% else %}b-intake{% endif %}">{{ row[1] }}</span></td>
+          <td>{{ row[2] }}ms</td>
+          <td class="cost">${{ "%.6f"|format(row[3]) }}</td>
+          <td><span class="badge {% if row[4] == 1 %}b-success{% else %}b-fail{% endif %}">{% if row[4] == 1 %}OK{% else %}FAIL{% endif %}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">No calls recorded yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if failures %}
+  <div class="section-title">Recent failures</div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Type</th>
+          <th>Job ID</th>
+          <th>Error</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in failures %}
+        <tr>
+          <td>{{ row[0] }}</td>
+          <td><span class="badge b-fail">{{ row[1] }}</span></td>
+          <td style="font-family:monospace;font-size:11px">{{ row[2][:16] if row[2] else '-' }}...</td>
+          <td style="color:#c0392b;font-size:12px">{{ row[3][:80] if row[3] else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>

@@ -1,0 +1,524 @@
+import json
+import sqlite3
+import os
+from flask import Flask, render_template, jsonify, request, redirect
+from dotenv import load_dotenv
+from scraper import init_db
+
+load_dotenv()
+
+app = Flask(__name__)
+DB_PATH = "tracker.db"
+
+
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_jobs_data(status="all", market="all", min_score=70, fresh_hours=72):
+    conn = get_db()
+    query = "SELECT * FROM jobs WHERE is_stale = 0"
+    params = []
+    if status != "all":
+        query += " AND status = ?"
+        params.append(status)
+    if min_score > 0:
+        query += " AND score >= ?"
+        params.append(min_score)
+    if market != "all":
+        query += " AND search_pass = ?"
+        params.append(market)
+    if fresh_hours and fresh_hours > 0:
+        query += f" AND date_found >= datetime('now', '-{fresh_hours} hours')"
+    query += " ORDER BY score DESC LIMIT 50"
+    jobs = conn.execute(query, params).fetchall()
+    conn.close()
+    result = []
+    for job in jobs:
+        j = dict(job)
+        for f in ["score_reasons", "score_gaps"]:
+            if j.get(f):
+                try:
+                    j[f] = json.loads(j[f])
+                except Exception:
+                    j[f] = []
+        result.append(j)
+    return result
+
+
+def get_stats_data():
+    conn = get_db()
+    stats = {
+        "total": conn.execute("SELECT COUNT(*) FROM jobs WHERE is_stale = 0").fetchone()[0],
+        "scored": conn.execute("SELECT COUNT(*) FROM jobs WHERE score IS NOT NULL AND is_stale = 0").fetchone()[0],
+        "high_match": conn.execute("SELECT COUNT(*) FROM jobs WHERE score >= 70 AND is_stale = 0").fetchone()[0],
+        "applied": conn.execute("SELECT COUNT(*) FROM jobs WHERE status = 'applied'").fetchone()[0],
+        "fresh": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= datetime('now', '-3 days') AND is_stale = 0").fetchone()[0],
+        "fresh_scored": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= datetime('now', '-3 days') AND score >= 70 AND is_stale = 0").fetchone()[0],
+        "canada": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada' AND is_stale = 0").fetchone()[0],        "canada_remote": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada_remote' AND is_stale = 0").fetchone()[0],        "canada_hybrid": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada_hybrid' AND is_stale = 0").fetchone()[0],        "ottawa": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'ottawa' AND is_stale = 0").fetchone()[0],        "us": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'us_remote' AND is_stale = 0").fetchone()[0],        "contract": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'contract' AND is_stale = 0").fetchone()[0],
+    }
+    conn.close()
+    return stats
+
+
+@app.route("/")
+def index():
+    status = request.args.get("status", "all")
+    market = request.args.get("market", "all")
+    min_score = int(request.args.get("min_score", 70))
+    fresh_hours = int(request.args.get("fresh_hours", 72))
+    jobs = get_jobs_data(status, market, min_score, fresh_hours)
+    stats = get_stats_data()
+    return render_template("index.html",
+        jobs=jobs, stats=stats,
+        filters={"status": status, "market": market, "min_score": min_score, "fresh_hours": fresh_hours}
+    )
+
+
+@app.route("/status/<job_id>", methods=["POST"])
+def update_status(job_id):
+    new_status = request.form.get("status")
+    resume_path = request.form.get("resume_path", "")
+    valid = ["new", "reviewing", "applied", "interviewing", "rejected", "offer"]
+    if new_status in valid:
+        conn = get_db()
+        conn.execute("UPDATE jobs SET status = ? WHERE id = ?", (new_status, job_id))
+
+        # If marking as applied — record company and resume
+        if new_status == "applied":
+            job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
+            if job:
+                company = job["company"]
+                used_resume = resume_path or job["resume_path"] or ""
+                # Record in applied_companies
+                conn.execute(
+                    "INSERT INTO applied_companies (company, job_id, resume_path, date_applied) VALUES (?, ?, ?, datetime('now'))",
+                    (company, job_id, used_resume)
+                )
+                if used_resume:
+                    conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (used_resume, job_id))
+
+        conn.commit()
+        conn.close()
+    return redirect(request.referrer or "/")
+
+
+@app.route("/refresh", methods=["POST"])
+def refresh():
+    try:
+        from scraper import run_scrape
+        new_jobs = run_scrape()
+        if new_jobs > 0:
+            try:
+                from scorer import score_all_unscored
+                score_all_unscored()
+            except Exception as e:
+                print(f"Scoring error: {e}")
+    except Exception as e:
+        print(f"Refresh error: {e}")
+    return redirect("/")
+
+
+@app.route("/tailor/<job_id>", methods=["POST"])
+def tailor(job_id):
+    try:
+        from tailor import tailor_for_job, build_tailored_docx
+        result = tailor_for_job(job_id)
+        if "error" not in result:
+            docx = build_tailored_docx(result)
+            if docx.get("success"):
+                # Store resume path against job
+                conn = get_db()
+                conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (docx["path"], job_id))
+                conn.commit()
+                conn.close()
+    except Exception as e:
+        print(f"Tailor error: {e}")
+    return redirect(request.referrer or "/")
+
+
+# ── JSON API endpoints ──
+
+@app.route("/api/stats")
+def api_stats():
+    return jsonify(get_stats_data())
+
+
+@app.route("/api/jobs")
+def api_jobs():
+    status = request.args.get("status", "all")
+    market = request.args.get("search_pass", "all")
+    min_score = int(request.args.get("min_score", 70))
+    fresh_hours = int(request.args.get("fresh_hours", 72))
+    jobs = get_jobs_data(status, market, min_score, fresh_hours)
+
+
+@app.route("/api/jobs/<job_id>/status", methods=["POST"])
+def api_update_status(job_id):
+    data = request.json or {}
+    new_status = data.get("status")
+    resume_path = data.get("resume_path", "")
+    valid = ["new", "reviewing", "applied", "interviewing", "rejected", "offer"]
+    if new_status in valid:
+        conn = get_db()
+        conn.execute("UPDATE jobs SET status = ? WHERE id = ?", (new_status, job_id))
+        if new_status == "applied":
+            job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
+            if job:
+                company = job["company"]
+                used_resume = resume_path or job["resume_path"] or ""
+                conn.execute(
+                    "INSERT INTO applied_companies (company, job_id, resume_path, date_applied) VALUES (?, ?, ?, datetime('now'))",
+                    (company, job_id, used_resume)
+                )
+                if used_resume:
+                    conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (used_resume, job_id))
+        conn.commit()
+        conn.close()
+    return jsonify({"success": True})
+
+
+@app.route("/api/jobs/<job_id>/follow-up")
+def api_follow_up(job_id):
+    """Return fresh roles at the same company posted within 72hrs."""
+    conn = get_db()
+    source_job = conn.execute("SELECT company, resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if not source_job:
+        conn.close()
+        return jsonify([])
+
+    company = source_job["company"]
+    resume_path = source_job["resume_path"]
+
+    follow_ups = conn.execute("""
+        SELECT id, title, company, location, score, search_pass,
+               date_found, job_url, status, resume_path
+        FROM jobs
+        WHERE company = ?
+        AND id != ?
+        AND status != 'applied'
+        AND is_stale = 0
+        AND date_found >= datetime('now', '-3 days')
+        ORDER BY score DESC
+        LIMIT 5
+    """, (company, job_id)).fetchall()
+    conn.close()
+
+    return jsonify({
+        "company": company,
+        "source_resume": resume_path,
+        "follow_ups": [dict(j) for j in follow_ups]
+    })
+
+
+@app.route("/api/jobs/<job_id>/reuse-resume", methods=["POST"])
+def api_reuse_resume(job_id):
+    """Reuse resume from source job for this job, swapping location only."""
+    data = request.json or {}
+    source_job_id = data.get("source_job_id")
+    if not source_job_id:
+        return jsonify({"error": "source_job_id required"}), 400
+    try:
+        from tailor import reuse_resume
+        result = reuse_resume(source_job_id, job_id)
+        if result.get("success"):
+            # Store the new resume path
+            conn = get_db()
+            conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (result["path"], job_id))
+            conn.commit()
+            conn.close()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/refresh", methods=["POST"])
+def api_refresh():
+    try:
+        from scraper import run_scrape
+        new_jobs = run_scrape()
+        scored = 0
+        if new_jobs > 0:
+            try:
+                from scorer import score_all_unscored
+                scored = score_all_unscored()
+            except Exception as e:
+                print(f"Scoring error: {e}")
+        return jsonify({"success": True, "new_jobs": new_jobs, "scored": scored})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/jobs/<job_id>/intake", methods=["POST"])
+def job_intake(job_id):
+    try:
+        from tailor import run_intake
+        return jsonify(run_intake(job_id))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/jobs/<job_id>/tailor", methods=["POST"])
+def api_tailor(job_id):
+    try:
+        from tailor import tailor_for_job, build_tailored_docx
+        data = request.json or {}
+        intake_answers = data.get("intake_answers", None)
+        result = tailor_for_job(job_id, intake_answers=intake_answers)
+        if "error" in result:
+            return jsonify(result), 500
+        docx_result = build_tailored_docx(result)
+        if docx_result.get("success"):
+            conn = get_db()
+            conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (docx_result["path"], job_id))
+            conn.commit()
+            conn.close()
+        result["docx"] = docx_result
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+@app.route("/governance")
+def governance():
+    conn = get_db()
+    total_calls = conn.execute("SELECT COUNT(*) FROM ai_calls").fetchone()[0]
+    today_calls = conn.execute("SELECT COUNT(*) FROM ai_calls WHERE timestamp >= date('now')").fetchone()[0]
+    today_cost = conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls WHERE timestamp >= date('now')").fetchone()[0]
+    today_success = conn.execute("SELECT COALESCE(AVG(success),0)*100 FROM ai_calls WHERE timestamp >= date('now')").fetchone()[0]
+    week_calls = conn.execute("SELECT COUNT(*) FROM ai_calls WHERE timestamp >= date('now', '-7 days')").fetchone()[0]
+    week_cost = conn.execute("SELECT COALESCE(SUM(cost_usd),0) FROM ai_calls WHERE timestamp >= date('now', '-7 days')").fetchone()[0]
+    latency = conn.execute("SELECT call_type, ROUND(AVG(latency_ms),0), COUNT(*) FROM ai_calls GROUP BY call_type").fetchall()
+    failures = conn.execute("SELECT timestamp, call_type, job_id, error_text FROM ai_calls WHERE success = 0 ORDER BY timestamp DESC LIMIT 5").fetchall()
+    recent = conn.execute("SELECT timestamp, call_type, latency_ms, cost_usd, success FROM ai_calls ORDER BY timestamp DESC LIMIT 10").fetchall()
+    conn.close()
+    return render_template("governance.html",
+        total_calls=total_calls,
+        today_calls=today_calls,
+        today_cost=round(today_cost, 4),
+        today_success=round(today_success, 1),
+        week_calls=week_calls,
+        week_cost=round(week_cost, 4),
+        latency=latency,
+        failures=failures,
+        recent=recent
+    )
+
+
+@app.route("/skills")
+def skills():
+    import json
+    try:
+        data = json.load(open("data/skills.json"))
+        skills_list = data.get("skills", [])
+        concepts = list(set(s["enterprise_concept"] for s in skills_list))
+        questions_count = sum(len(s["interview_questions"]) for s in skills_list)
+        return render_template("skills.html",
+            skills=skills_list,
+            concepts=concepts,
+            questions_count=questions_count,
+            concepts_count=len(concepts)
+        )
+    except Exception as e:
+        return render_template("skills.html",
+            skills=[], concepts=[], questions_count=0, concepts_count=0
+        )
+
+@app.route("/api/skills/<skill_id>/refine", methods=["POST"])
+def refine_skill_answer(skill_id):
+    import json
+    try:
+        data = json.load(open("data/skills.json"))
+        skill = next((s for s in data["skills"] if s["id"] == skill_id), None)
+        if not skill:
+            return jsonify({"error": "Skill not found"}), 404
+        from ai_logger import call_claude_with_logging
+        from anthropic import Anthropic
+        client = Anthropic()
+        prompt = f"""You are a career coach helping a senior analytics professional prepare for enterprise AI operator roles.
+
+Refine this STAR format interview answer to make it more concise, confident, and specific. 
+Keep all the real details. Remove any filler. Make it sound like someone who knows exactly what they did and why it mattered.
+Keep it under 150 words.
+
+Enterprise concept: {skill["enterprise_concept"]}
+Current answer: {skill["star_answer"]}
+
+Return only the refined answer, no preamble."""
+
+        response = call_claude_with_logging(
+            client=client,
+            call_type="skills_refine",
+            job_id=skill_id,
+            model="claude-sonnet-4-20250514",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=300
+        )
+        refined = response.content[0].text.strip()
+        return jsonify({"refined": refined})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/simulate")
+def simulate():
+    import json
+    try:
+        data = json.load(open("data/skills.json"))
+        companies = data.get("target_companies", [])
+        return render_template("simulate.html", companies=companies)
+    except Exception as e:
+        return render_template("simulate.html", companies=[])
+
+
+@app.route("/api/simulate/question")
+def api_simulate_question():
+    import json, random
+    company_id = request.args.get("company_id", request.args.get("company", "wells_fargo"))
+    try:
+        data = json.load(open("data/skills.json"))
+        skills = data.get("skills", [])
+        companies = data.get("target_companies", [])
+        company = next((c for c in companies if c["id"] == company_id), None)
+        if not skills or not company:
+            return jsonify({"error": "No data found"})
+        skill = random.choice(skills)
+        question_base = random.choice(skill["interview_questions"])
+        from ai_logger import call_claude_with_logging
+        from anthropic import Anthropic
+        client = Anthropic()
+        prompt = f"""Reframe this interview question from the perspective of {company["name"]} hiring for {company["role"]}.
+Company framing: {company["framing"]}
+Original question: {question_base}
+Return ONLY JSON: {{"question": "<reframed question>", "skill_id": "{skill["id"]}", "skill_concept": "{skill["enterprise_concept"]}", "star_answer": "{skill["star_answer"][:200]}"}}"""
+        response = call_claude_with_logging(client=client, call_type="simulate_question",
+            job_id=company_id, model="claude-haiku-4-5-20251001",
+            messages=[{"role": "user", "content": prompt}], max_tokens=400)
+        text = response.content[0].text.strip().replace("```json","").replace("```","").strip()
+        return jsonify(json.loads(text))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/simulate/feedback", methods=["POST"])
+def api_simulate_feedback():
+    import json
+    req = request.json or {}
+    company_id = req.get("company_id", "wells_fargo")
+    question = req.get("question", "")
+    answer = req.get("answer", "")
+    skill_id = req.get("skill_id")
+    try:
+        data = json.load(open("data/skills.json"))
+        companies = data.get("target_companies", [])
+        company = next((c for c in companies if c["id"] == company_id), None)
+        skill_context = ""
+        if skill_id:
+            skill = next((s for s in data.get("skills", []) if s["id"] == skill_id), None)
+            if skill:
+                skill_context = f"Candidate documented STAR answer: {skill['star_answer'][:300]}"
+        from ai_logger import call_claude_with_logging
+        from anthropic import Anthropic
+        client = Anthropic()
+        prompt = f"""You are a senior interviewer at {company["name"]} for {company["role"]}.
+Framing: {company["framing"]}
+Follow-up pattern: {company["follow_up_pattern"]}
+{skill_context}
+Question: {question}
+Candidate answer: {answer}
+Score 0-100 where 80+ is strong hire signal.
+Return ONLY JSON: {{"score": <int>, "verdict": "<one sentence>", "strong": "<what was strong>", "improve": "<what was missing>", "model_answer": "<3-4 sentence model answer>"}}"""
+        response = call_claude_with_logging(client=client, call_type="simulate_feedback",
+            job_id=company_id, model="claude-sonnet-4-20250514",
+            messages=[{"role": "user", "content": prompt}], max_tokens=600)
+        text = response.content[0].text.strip().replace("```json","").replace("```","").strip()
+        return jsonify(json.loads(text))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/simulate/harder", methods=["POST"])
+def api_simulate_harder():
+    import json
+    req = request.json or {}
+    company_id = req.get("company_id", "wells_fargo")
+    original = req.get("original_question", "")
+    try:
+        data = json.load(open("data/skills.json"))
+        company = next((c for c in data.get("target_companies", []) if c["id"] == company_id), None)
+        from ai_logger import call_claude_with_logging
+        from anthropic import Anthropic
+        client = Anthropic()
+        prompt = f"""Senior interviewer at {company["name"]} for {company["role"]}.
+Original question: {original}
+Generate a harder follow-up that digs into failure modes, edge cases, or governance implications.
+Return ONLY JSON: {{"question": "<harder question>"}}"""
+        response = call_claude_with_logging(client=client, call_type="simulate_harder",
+            job_id=company_id, model="claude-haiku-4-5-20251001",
+            messages=[{"role": "user", "content": prompt}], max_tokens=200)
+        text = response.content[0].text.strip().replace("```json","").replace("```","").strip()
+        return jsonify(json.loads(text))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/jobs/add", methods=["POST"])
+def api_add_job():
+    import hashlib, json
+    from datetime import datetime
+    data = request.json or {}
+    
+    title = data.get("title", "").strip()
+    company = data.get("company", "").strip()
+    location = data.get("location", "").strip()
+    description = data.get("description", "").strip()
+    job_url = data.get("job_url", "").strip()
+    
+    if not title or not company or not description:
+        return jsonify({"error": "Title, company and description are required"}), 400
+    
+    job_id = hashlib.md5(f"{title}{company}{location}".encode()).hexdigest()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    conn = get_db()
+    existing = conn.execute("SELECT id FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({"error": "Job already exists", "job_id": job_id}), 200
+    
+    conn.execute("""
+        INSERT INTO jobs (
+            id, title, company, location, source, job_url,
+            description, status, search_pass, is_remote, is_stale,
+            date_found, date_posted
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        job_id, title, company, location,
+        "manual", job_url, description,
+        "new", "canada", 0, 0, now, now
+    ))
+    conn.commit()
+    conn.close()
+    
+    # Score immediately
+    try:
+        from scorer import score_single_job
+        score_single_job(job_id)
+        conn = get_db()
+        job = conn.execute("SELECT score FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        conn.close()
+        score = job[0] if job else 0
+    except Exception as e:
+        score = 0
+    
+    return jsonify({"success": True, "job_id": job_id, "score": score})
+
+if __name__ == "__main__":
+    init_db()
+    print("\n" + "="*50)
+    print("Job Apply Dashboard running at http://127.0.0.1:5001")
+    print("="*50 + "\n")
+    app.run(host="127.0.0.1", port=5001, debug=False)
