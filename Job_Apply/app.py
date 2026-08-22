@@ -270,6 +270,36 @@ def api_reuse_resume(job_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/refresh/scrape", methods=["POST"])
+def api_refresh_scrape():
+    """Scrape exactly one market (index `i`, 0-based). One request per market
+    instead of one request for the whole profile — a full scrape across every
+    market plus scoring was blowing past Vercel's 60s function timeout every
+    time (confirmed in runtime logs: it never even finished market 1 of 3).
+    The dashboard's Refresh Jobs button calls this once per configured market."""
+    try:
+        i = int(request.args.get("i", 0))
+        from scraper import run_scrape_market
+        return jsonify(run_scrape_market(i))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/refresh/score", methods=["POST"])
+def api_refresh_score():
+    """Score up to `limit` unscored jobs (one live Claude call each) and
+    report how many are still left, so the dashboard can keep calling this
+    in a loop instead of one unbounded call that can time out mid-batch."""
+    try:
+        limit = int(request.args.get("limit", 12))
+        from scorer import score_all_unscored, count_unscored
+        scored = score_all_unscored(limit=limit)
+        remaining = count_unscored()
+        return jsonify({"scored": scored, "remaining": remaining})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/refresh", methods=["POST"])
 def api_refresh():
     try:

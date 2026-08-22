@@ -266,9 +266,7 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
     <div class="appbar-actions">
       <button class="icon-btn" type="button" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="theme-glyph">◐</span></button>
       <button class="btn btn-sm" type="button" onclick="openAddJob()">+ Add Job</button>
-      <form action="/refresh" method="post" style="margin:0">
-        <button class="btn btn-sm btn-primary" type="submit">Refresh Jobs</button>
-      </form>
+      <button class="btn btn-sm btn-primary" type="button" id="refresh-btn" onclick="refreshJobs()">Refresh Jobs</button>
     </div>
   </div>
 </header>
@@ -283,6 +281,7 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
     Refresh complete — found {{ refresh_ok }} new job{{ '' if refresh_ok == '1' else 's' }}{% if refresh_scored %}, scored {{ refresh_scored }}{% endif %}.
   </div>
   {% endif %}
+  <div class="notice" id="refresh-progress" style="margin-bottom:16px;display:none"></div>
   <div class="page-head">
     <div>
       <div class="eyebrow">Pipeline</div>
@@ -515,6 +514,49 @@ function toggleDetails(jobId, btn){
   var el=document.getElementById('details-'+jobId);
   var open=el.classList.toggle('open');
   btn.textContent = open ? 'Hide details' : 'Show details';
+}
+
+/* ---------- refresh jobs ---------- */
+/* Runs the scrape+score pipeline as a sequence of small requests instead of
+   one big POST /refresh — a single request covering every market plus
+   scoring every new job reliably blew past Vercel's 60s function timeout.
+   One request per market, then repeated small scoring batches, each easily
+   finishes inside the limit; the DB is updated after every step so progress
+   is never lost even if the tab is closed partway through. */
+async function refreshJobs(){
+  var btn=document.getElementById('refresh-btn');
+  var box=document.getElementById('refresh-progress');
+  btn.disabled=true; box.style.display='block'; box.className='notice';
+  box.textContent='Loading profile…';
+  try{
+    var profRes=await fetch('/api/profile');
+    var profile=await profRes.json();
+    var markets=profile.markets||[];
+    if(!markets.length){
+      window.location.href='/?refresh_error='+encodeURIComponent('No search markets configured — add one in Settings first.');
+      return;
+    }
+    var totalNew=0;
+    for(var i=0;i<markets.length;i++){
+      box.textContent='Scraping market '+(i+1)+' of '+markets.length+'…';
+      var r=await fetch('/api/refresh/scrape?i='+i,{method:'POST'});
+      var data=await r.json();
+      if(!r.ok||data.error) throw new Error(data.error||'Scrape failed for market '+(i+1));
+      totalNew+=data.new_jobs||0;
+    }
+    var totalScored=0;
+    while(true){
+      box.textContent='Scoring new jobs… ('+totalScored+' scored so far)';
+      var sr=await fetch('/api/refresh/score?limit=12',{method:'POST'});
+      var sdata=await sr.json();
+      if(!sr.ok||sdata.error) throw new Error(sdata.error||'Scoring failed');
+      totalScored+=sdata.scored||0;
+      if(!sdata.scored || !sdata.remaining) break;
+    }
+    window.location.href='/?refresh_ok='+totalNew+'&refresh_scored='+totalScored;
+  }catch(e){
+    window.location.href='/?refresh_error='+encodeURIComponent(e.message||String(e));
+  }
 }
 
 /* ---------- add job ---------- */

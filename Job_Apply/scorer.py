@@ -163,7 +163,36 @@ def is_score_worthy(title, description):
     title_lower = title.lower()
     return any(kw.lower() in title_lower for kw in keywords)
 
-def score_all_unscored():
+def count_unscored():
+    """How many jobs are still waiting to be scored, under the same
+    eligibility rules score_all_unscored() applies (has a real description,
+    matches a target keyword if any are set)."""
+    keywords = _score_keywords()
+    conn = get_db()
+    base_query = """
+        SELECT COUNT(*) FROM jobs
+        WHERE score IS NULL
+        AND is_stale = 0
+        AND description IS NOT NULL
+        AND length(description) >= 200
+    """
+    if keywords:
+        like_clauses = " OR ".join(["lower(title) LIKE %s"] * len(keywords))
+        query = f"{base_query} AND ({like_clauses})"
+        params = [f"%{kw.lower()}%" for kw in keywords]
+    else:
+        query, params = base_query, []
+    count = conn.execute(query, params).fetchone()[0]
+    conn.close()
+    return count
+
+
+def score_all_unscored(limit=None):
+    """Score unscored jobs, oldest-eligibility-first. `limit` caps how many
+    are scored in this call — each one is a live Claude API call, and doing
+    all of them plus a full scrape in a single Vercel request is what was
+    blowing through the 60s function timeout. app.py now calls this in
+    bounded batches instead of unbounded."""
     keywords = _score_keywords()
 
     conn = get_db()
@@ -181,6 +210,9 @@ def score_all_unscored():
     else:
         query = f"{base_query} ORDER BY date_found DESC"
         params = []
+    if limit:
+        query += " LIMIT %s"
+        params.append(limit)
     jobs = conn.execute(query, params).fetchall()
     conn.close()
 

@@ -162,48 +162,82 @@ def mark_stale_jobs():
     if stale > 0:
         print(f"  Marked {stale} jobs as stale (older than 7 days)")
 
-def run_scrape():
-    print("\n" + "="*50)
-    print(f"Job scrape started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("="*50)
-    init_db()
+def run_scrape_market(market_index):
+    """Scrape exactly one configured market and save its results.
 
+    Vercel's function timeout (60s even after the maxDuration fix) is not
+    enough to scrape every market plus score every job in one request —
+    runtime logs showed /refresh timing out mid-way through market 1 of 3,
+    every time. Splitting the scrape into one-market-per-request calls
+    (driven by the dashboard's Refresh Jobs button in app.py) keeps each
+    request well inside the limit. init_db()/mark_stale_jobs() are cheap
+    and idempotent, so running them on every call is fine.
+
+    Returns a dict describing what happened; total_markets/market_index
+    let the caller know whether to request the next index.
+    """
+    init_db()
     stored = get_stored_profile()
     if not stored or not stored.get("target_titles") or not stored.get("markets"):
-        print("  No profile configured yet (target roles and/or search markets are "
-              "empty) — visit /settings before running a scrape. Skipping.")
-        return 0
+        return {
+            "new_jobs": 0, "market_index": market_index, "total_markets": 0,
+            "pass_name": None, "label": None,
+            "skipped": "No profile configured yet (target roles and/or search "
+                       "markets are empty) — visit /settings before running a scrape.",
+        }
 
     titles = stored["target_titles"]
     exclude = stored["exclude_keywords"]
     markets = stored["markets"]
-    all_jobs = []
+    total_markets = len(markets)
 
-    for i, market in enumerate(markets, start=1):
-        location = market.get("location") or ""
-        mode = (market.get("mode") or "").lower()
-        country = market.get("country") or "Canada"
-        pass_name = market_pass_name(market)
-        results = RESULTS_BY_MODE.get(mode, DEFAULT_RESULTS)
+    if market_index < 0 or market_index >= total_markets:
+        return {
+            "new_jobs": 0, "market_index": market_index, "total_markets": total_markets,
+            "pass_name": None, "label": None, "skipped": "market_index out of range",
+        }
 
-        print(f"\n--- Market {i}/{len(markets)}: {location or 'anywhere'} "
-              f"({mode or 'any mode'}, {country}) -> pass '{pass_name}' ---")
-        all_jobs.extend(run_search(
-            titles, location, country, exclude,
-            is_remote_search=(mode == "remote"), results=results,
-            pass_name=pass_name, mode=mode,
-        ))
+    market = markets[market_index]
+    location = market.get("location") or ""
+    mode = (market.get("mode") or "").lower()
+    country = market.get("country") or "Canada"
+    pass_name = market_pass_name(market)
+    results = RESULTS_BY_MODE.get(mode, DEFAULT_RESULTS)
 
-    print("\n--- Saving results ---")
-    total_new = save_jobs(all_jobs)
+    print(f"\n--- Market {market_index + 1}/{total_markets}: {location or 'anywhere'} "
+          f"({mode or 'any mode'}, {country}) -> pass '{pass_name}' ---")
+    jobs = run_search(
+        titles, location, country, exclude,
+        is_remote_search=(mode == "remote"), results=results,
+        pass_name=pass_name, mode=mode,
+    )
+    new_count = save_jobs(jobs)
     mark_stale_jobs()
+
+    print(f"  {pass_name}: {len(jobs)} found, {new_count} new")
+    return {
+        "new_jobs": new_count, "market_index": market_index, "total_markets": total_markets,
+        "pass_name": pass_name, "label": market.get("location") or pass_name, "skipped": None,
+    }
+
+
+def run_scrape():
+    """Scrape every configured market in one call. Fine for a local/background
+    process (scheduler.py) that isn't bound by Vercel's request timeout — the
+    live dashboard drives run_scrape_market() one market at a time instead."""
+    print("\n" + "="*50)
+    print(f"Job scrape started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("="*50)
+
+    stored = get_stored_profile()
+    total_markets = len(stored["markets"]) if stored else 0
+    total_new = 0
+    for i in range(total_markets):
+        result = run_scrape_market(i)
+        total_new += result["new_jobs"]
 
     print("\n" + "="*50)
     print(f"Scrape complete. {total_new} new jobs added.")
-    from collections import Counter
-    passes = Counter(j["search_pass"] for j in all_jobs)
-    for p, count in sorted(passes.items()):
-        print(f"  {p}: {count} found")
     print("="*50)
     return total_new
 
