@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from jobspy import scrape_jobs
 from dotenv import load_dotenv
-from db import get_db
+from db import get_db, init_db
 from profile_store import get_profile as get_stored_profile
 load_dotenv()
 
@@ -41,16 +41,6 @@ def market_pass_name(market):
     loc_slug = re.sub(r'[^a-z0-9]+', '_', (market.get("location") or "").lower()).strip('_') or "anywhere"
     mode_slug = (market.get("mode") or "").lower().replace(" ", "_").replace("-", "_")
     return f"{loc_slug}_{mode_slug}" if mode_slug else loc_slug
-
-def init_db():
-    """Ensure the Postgres schema exists (idempotent — see schema.sql)."""
-    import os
-    schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema.sql")
-    conn = get_db()
-    with open(schema_path) as f:
-        conn.execute(f.read())
-    conn.commit()
-    conn.close()
 
 def fingerprint(title, company, location):
     raw = f"{title.lower().strip()}{company.lower().strip()}{location.lower().strip()}"

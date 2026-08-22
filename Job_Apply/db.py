@@ -92,3 +92,22 @@ class Connection:
 def get_db():
     raw = psycopg2.connect(os.environ["DATABASE_URL"])
     return Connection(raw)
+
+
+def init_db():
+    """Ensure the Postgres schema exists (idempotent — see schema.sql).
+
+    Lives here rather than in scraper.py (its original home) because
+    scraper.py imports jobspy at module level, and jobspy is deliberately
+    excluded from requirements.txt (Vercel-deployed dashboard doesn't need
+    it — see requirements-local.txt). Importing scraper at all on Vercel
+    would fail before ever reaching this function. db.py has no such
+    dependency and is already imported everywhere, so app.py can call this
+    at startup unconditionally instead of only ever running it as a side
+    effect of a scrape."""
+    schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema.sql")
+    conn = get_db()
+    with open(schema_path) as f:
+        conn.execute(f.read())
+    conn.commit()
+    conn.close()

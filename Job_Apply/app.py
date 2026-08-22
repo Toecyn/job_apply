@@ -2,11 +2,23 @@ import json
 import os
 from flask import Flask, render_template, jsonify, request, redirect
 from dotenv import load_dotenv
-from db import get_db
+from db import get_db, init_db
 
 load_dotenv()
 
 app = Flask(__name__)
+
+# Ensure the schema (including the profile table) exists before any route
+# runs. Previously this only ran as a side effect of a scrape, or in the
+# local `python app.py` dev block below — neither of which fires on
+# Vercel's cold start, so a fresh deploy's Settings page would 500 on
+# save until someone happened to trigger a scrape first. Idempotent
+# (CREATE TABLE IF NOT EXISTS / INSERT ... ON CONFLICT DO NOTHING), so
+# running it on every cold start is safe and cheap.
+try:
+    init_db()
+except Exception as e:
+    print(f"init_db() at startup failed (DATABASE_URL unset locally, etc.): {e}")
 
 
 def get_jobs_data(status="all", market="all", min_score=70, fresh_hours=72):
@@ -627,8 +639,7 @@ def api_profile_resume_skills():
 
 
 if __name__ == "__main__":
-    from scraper import init_db
-    init_db()
+    # init_db() already ran unconditionally at module import time above.
     print("\n" + "="*50)
     print("Job Apply Dashboard running at http://127.0.0.1:5001")
     print("="*50 + "\n")
