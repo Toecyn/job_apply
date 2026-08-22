@@ -4,16 +4,25 @@ from anthropic import Anthropic
 from ai_logger import call_claude_with_logging
 from dotenv import load_dotenv
 from db import get_db
+from profile_store import get_profile as get_stored_profile
 
 load_dotenv()
 
-RESUME_PATH = "master_resume.json"
 client = Anthropic()
 
 
 def load_profile():
-    with open(RESUME_PATH) as f:
-        data = json.load(f)
+    """Same shape as before — only the source changed, from master_resume.json
+    to the profile table (profile.resume_json holds the resume content;
+    target_titles/open_to_remote are now their own profile columns rather
+    than nested under a job_search_config key)."""
+    stored = get_stored_profile()
+    if not stored or not stored.get("resume_json"):
+        raise RuntimeError(
+            "No resume on file yet — visit /settings to upload a resume "
+            "and set target roles before scoring can run."
+        )
+    data = stored["resume_json"]
     profile = {
         "name": data["name"],
         "summary": data["summary"],
@@ -31,8 +40,8 @@ def load_profile():
             }
             for role in data["experience"]
         ],
-        "target_titles": data["job_search_config"]["target_titles"],
-        "open_to_remote": data["job_search_config"].get("open_to_remote", True)
+        "target_titles": stored["target_titles"],
+        "open_to_remote": bool(stored.get("open_to_remote", True))
     }
     return profile
 
@@ -137,45 +146,42 @@ def score_single_job(job_id):
 
 
 
-# Keywords that must appear in title for a job to be worth scoring
-SCORE_WORTHY_TITLES = [
-    "analyst", "analytics", "intelligence", "reporting", "insights",
-    "data", " bi ", "crm", "campaign", "revenue", "governance",
-    "operations", "metrics", "performance", "dashboard", "visualization",
-    "forecasting", "segmentation", "modeling", "modelling"
-]
+def _score_keywords():
+    """profile.score_keywords, set on the Settings page (auto-suggested from
+    target titles, editable). Empty list means "no title gate" rather than
+    "score nothing" — a fresh profile shouldn't silently block every job."""
+    stored = get_stored_profile()
+    return [kw for kw in (stored or {}).get("score_keywords", []) if kw and kw.strip()]
 
 def is_score_worthy(title, description):
     """Return True only if job is worth spending API credits on."""
     if not description or len(description) < 200:
         return False
+    keywords = _score_keywords()
+    if not keywords:
+        return True
     title_lower = title.lower()
-    return any(kw in title_lower for kw in SCORE_WORTHY_TITLES)
+    return any(kw.lower() in title_lower for kw in keywords)
 
 def score_all_unscored():
+    keywords = _score_keywords()
+
     conn = get_db()
-    jobs = conn.execute("""
+    base_query = """
         SELECT * FROM jobs
         WHERE score IS NULL
         AND is_stale = 0
         AND description IS NOT NULL
         AND length(description) >= 200
-        AND (
-            lower(title) LIKE '%analyst%' OR
-            lower(title) LIKE '%analytics%' OR
-            lower(title) LIKE '%intelligence%' OR
-            lower(title) LIKE '%reporting%' OR
-            lower(title) LIKE '%insights%' OR
-            lower(title) LIKE '%data%' OR
-            lower(title) LIKE '%governance%' OR
-            lower(title) LIKE '%campaign%' OR
-            lower(title) LIKE '%revenue%' OR
-            lower(title) LIKE '%metrics%' OR
-            lower(title) LIKE '%dashboard%' OR
-            lower(title) LIKE '%forecasting%'
-        )
-        ORDER BY date_found DESC
-    """).fetchall()
+    """
+    if keywords:
+        like_clauses = " OR ".join(["lower(title) LIKE %s"] * len(keywords))
+        query = f"{base_query} AND ({like_clauses}) ORDER BY date_found DESC"
+        params = [f"%{kw.lower()}%" for kw in keywords]
+    else:
+        query = f"{base_query} ORDER BY date_found DESC"
+        params = []
+    jobs = conn.execute(query, params).fetchall()
     conn.close()
 
     if not jobs:

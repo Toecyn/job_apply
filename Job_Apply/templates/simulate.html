@@ -1,91 +1,218 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Interview Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; color: #1a1a1a; }
-header { background: #1F4E79; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-header h1 { font-size: 18px; font-weight: 600; }
-.nav { display: flex; gap: 12px; }
-.nav a { color: white; text-decoration: none; font-size: 13px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; }
-.nav a.active { background: rgba(255,255,255,0.2); }
-.nav a:hover { background: rgba(255,255,255,0.1); }
-.page { padding: 24px; max-width: 900px; margin: 0 auto; }
-.company-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 28px; }
-.company-card { background: white; border: 2px solid #e5e5e5; border-radius: 10px; padding: 18px 20px; cursor: pointer; }
-.company-card:hover { border-color: #1F4E79; }
-.company-card.active { border-color: #1F4E79; background: #e8f0f7; }
-.company-name { font-size: 16px; font-weight: 700; color: #1F4E79; margin-bottom: 4px; }
-.company-role { font-size: 12px; color: #666; margin-bottom: 10px; }
-.company-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.ctag { padding: 2px 8px; background: #f0f0f0; border-radius: 4px; font-size: 11px; color: #444; }
-.company-card.active .ctag { background: #d0e4f7; color: #1F4E79; }
-.framing-box { background: white; border-radius: 10px; border: 1px solid #e5e5e5; padding: 20px; margin-bottom: 20px; display: none; }
-.framing-box.open { display: block; }
-.framing-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 8px; }
-.framing-text { font-size: 13px; color: #444; line-height: 1.6; background: #fff8e1; padding: 12px; border-radius: 6px; border-left: 3px solid #f59e0b; margin-bottom: 12px; }
-.follow-up-text { font-size: 13px; color: #555; line-height: 1.6; background: #f0f4ff; padding: 10px 12px; border-radius: 6px; border-left: 3px solid #1F4E79; }
-.simulator { background: white; border-radius: 10px; border: 1px solid #e5e5e5; overflow: hidden; display: none; }
-.simulator.open { display: block; }
-.sim-header { background: #1F4E79; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
-.sim-header h3 { color: white; font-size: 15px; font-weight: 600; }
-.sim-controls { display: flex; gap: 8px; }
-.btn-sm { padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; border: none; font-weight: 500; }
-.btn-new { background: rgba(255,255,255,0.2); color: white; }
-.btn-skill { background: #f59e0b; color: white; }
-.question-box { padding: 24px; border-bottom: 1px solid #f0f0f0; }
-.q-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 10px; }
-.question-text { font-size: 15px; color: #1a1a1a; line-height: 1.6; font-weight: 500; background: #f8f9fa; padding: 16px; border-radius: 8px; border-left: 4px solid #1F4E79; }
-.follow-up-hint { font-size: 12px; color: #856404; background: #fff3cd; padding: 8px 12px; border-radius: 6px; margin-top: 10px; }
-.answer-box { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; }
-.answer-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 8px; }
-textarea { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 120px; line-height: 1.6; }
-textarea:focus { outline: none; border-color: #1F4E79; }
-.answer-actions { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
-.btn-submit { background: #1F4E79; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
-.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-show-star { background: white; color: #1F4E79; border: 1px solid #1F4E79; padding: 10px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; }
-.hint-text { font-size: 12px; color: #888; }
-.feedback-box { padding: 20px 24px; display: none; }
-.feedback-box.open { display: block; }
-.fb-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 8px; }
-.fb-score { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.score-circle { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; }
-.score-90 { background: #e6f4ea; color: #1e7e34; }
-.score-70 { background: #fff3cd; color: #856404; }
-.score-50 { background: #fde8e8; color: #c0392b; }
-.fb-verdict { font-size: 14px; color: #333; line-height: 1.6; }
-.fb-strong { background: #e8f5e9; border-radius: 6px; padding: 12px; margin-bottom: 10px; border-left: 3px solid #1e7e34; font-size: 13px; color: #333; line-height: 1.6; }
-.fb-improve { background: #fff3cd; border-radius: 6px; padding: 12px; margin-bottom: 10px; border-left: 3px solid #856404; font-size: 13px; color: #333; line-height: 1.6; }
-.fb-model { background: #f0f4ff; border-radius: 6px; padding: 12px; border-left: 3px solid #1F4E79; font-size: 13px; color: #333; line-height: 1.6; }
-.star-answer-box { background: #e8f5e9; border-radius: 6px; padding: 14px; border-left: 3px solid #1e7e34; font-size: 13px; color: #333; line-height: 1.7; display: none; margin-top: 10px; }
-.star-answer-box.open { display: block; }
-.next-actions { display: flex; gap: 10px; margin-top: 16px; }
-.btn-next { background: #1F4E79; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.btn-harder { background: #c0392b; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.empty-state { text-align: center; padding: 60px 24px; color: #888; }
-.empty-state h3 { font-size: 16px; margin-bottom: 8px; color: #444; }
+/* ============================================================
+   JOB APPLY — DESIGN SYSTEM (shared across all templates)
+   ============================================================ */
+:root{
+  --font-ui:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --navy-50:#eef4fa; --navy-100:#d9e6f3; --navy-200:#b3cce6;
+  --navy-400:#3f74a6; --navy-500:#2a5f92; --navy-600:#1F4E79;
+  --navy-700:#183c5e; --navy-800:#122d47; --navy-900:#0c1f31;
+
+  --n-0:#ffffff; --n-25:#fcfcfd; --n-50:#f7f8fa; --n-100:#f0f2f5; --n-200:#e6e9ef;
+  --n-300:#d3d8e0; --n-400:#aab2bf; --n-500:#79828f; --n-600:#565f6c; --n-700:#3b434e;
+  --n-800:#252b33; --n-900:#12161b;
+
+  --success:#0f7a4d; --success-fg:#08633d; --success-bg:#e9f8f0; --success-bd:#bfe8d4;
+  --warn:#b06a06;    --warn-fg:#8a5205;    --warn-bg:#fdf5e6;    --warn-bd:#f2ddb0;
+  --danger:#c0362b;  --danger-fg:#9c2b22;  --danger-bg:#fdeeec;  --danger-bd:#f5cdc8;
+  --info:#1F4E79;    --info-fg:#183c5e;    --info-bg:#eef4fa;    --info-bd:#cfe0ef;
+  --neutral-bg:#f0f2f5; --neutral-fg:#565f6c; --neutral-bd:#e6e9ef;
+
+  --bg:var(--n-100); --surface:var(--n-0); --surface-2:var(--n-50); --surface-3:var(--n-25);
+  --border:var(--n-200); --border-strong:var(--n-300);
+  --text:var(--n-900); --text-2:var(--n-600); --text-3:var(--n-500);
+  --accent:var(--navy-600); --accent-hover:var(--navy-700); --accent-soft:var(--navy-50);
+  --on-accent:#ffffff;
+
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-full:999px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px; --sp-12:56px;
+
+  --shadow-xs:0 1px 2px rgba(16,22,31,.05);
+  --shadow-sm:0 1px 3px rgba(16,22,31,.07),0 1px 2px rgba(16,22,31,.04);
+  --shadow-md:0 4px 14px -4px rgba(16,22,31,.12),0 2px 5px -2px rgba(16,22,31,.06);
+  --shadow-lg:0 24px 48px -18px rgba(12,31,49,.35),0 8px 20px -12px rgba(12,31,49,.2);
+  --ring:0 0 0 3px rgba(31,78,121,.18);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+html[data-theme="dark"]{
+  --bg:#0d1117; --surface:#141a22; --surface-2:#1a212b; --surface-3:#11171e;
+  --border:#242c37; --border-strong:#333d4a;
+  --text:#e8ecf1; --text-2:#a2adbb; --text-3:#7c8896;
+  --accent:#5b93c9; --accent-hover:#78a8d8; --accent-soft:#16283a; --on-accent:#08131d;
+  --success:#4ac489; --success-fg:#7fdcae; --success-bg:#0f2a1f; --success-bd:#1e4735;
+  --warn:#e2a340;   --warn-fg:#f0c179;    --warn-bg:#2b2113;    --warn-bd:#4a3a1c;
+  --danger:#e2695d; --danger-fg:#f19a91;  --danger-bg:#2c1614;  --danger-bd:#4d2723;
+  --info:#6fa6da;   --info-fg:#9cc4e8;    --info-bg:#15242f;    --info-bd:#263d51;
+  --neutral-bg:#1c232d; --neutral-fg:#a2adbb; --neutral-bd:#2a323d;
+  --shadow-lg:0 24px 60px -20px rgba(0,0,0,.7);
+  --ring:0 0 0 3px rgba(91,147,201,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-ui);font-size:14px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;letter-spacing:-.018em;font-weight:600}
+.h1{font-size:24px;line-height:1.2}
+.h2{font-size:17px;line-height:1.3}
+.h3{font-size:14px;line-height:1.35}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--text-2)}
+.dim{color:var(--text-3)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+
+.appbar{position:sticky;top:0;z-index:50;background:color-mix(in oklab,var(--surface) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--border)}
+.appbar-inner{max-width:1180px;margin:0 auto;padding:0 var(--sp-6);height:58px;display:flex;align-items:center;gap:var(--sp-6)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.02em;flex-shrink:0}
+.brand-mark{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--navy-500),var(--navy-800));color:#fff;font-size:11px;font-weight:700;letter-spacing:.02em}
+.nav{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-link{padding:6px 11px;border-radius:var(--r-sm);font-size:13.5px;font-weight:500;color:var(--text-2);
+  white-space:nowrap;transition:background .15s var(--ease),color .15s var(--ease)}
+.nav-link:hover{background:var(--surface-2);color:var(--text)}
+.nav-link.active{color:var(--text);background:var(--accent-soft);font-weight:600}
+.appbar-actions{margin-left:auto;display:flex;align-items:center;gap:var(--sp-2)}
+.icon-btn{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);
+  display:grid;place-items:center;cursor:pointer;color:var(--text-2);transition:.15s var(--ease)}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+
+.page{max-width:900px;margin:0 auto;padding:var(--sp-8) var(--sp-6) 96px}
+.page-head{margin-bottom:var(--sp-6)}
+.section{margin-top:var(--sp-8)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 14px;border-radius:var(--r-sm);
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:13.5px;font-weight:550;
+  cursor:pointer;transition:.15s var(--ease);box-shadow:var(--shadow-xs);white-space:nowrap}
+.btn:hover{background:var(--surface-2);border-color:var(--n-400)}
+.btn:focus-visible{outline:none;box-shadow:var(--ring)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn-danger:hover{opacity:.9}
+.btn-on-accent{background:rgba(255,255,255,.16);border-color:transparent;color:#fff}
+.btn-on-accent:hover{background:rgba(255,255,255,.26)}
+.btn-sm{padding:5px 10px;font-size:12.5px}
+
+.textarea{width:100%;padding:14px;border-radius:var(--r-md);border:1px solid var(--border-strong);
+  background:var(--surface);font-size:14px;line-height:1.65;min-height:130px;resize:vertical;transition:.15s var(--ease)}
+.textarea:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-xs)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:var(--r-full);
+  font-size:11.5px;font-weight:600;letter-spacing:.01em;border:1px solid var(--neutral-bd);
+  background:var(--neutral-bg);color:var(--neutral-fg);white-space:nowrap}
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid color-mix(in oklab,currentColor 25%,transparent);
+  border-top-color:currentColor;display:inline-block;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============================================================
+   PAGE: SIMULATE
+   ============================================================ */
+.company-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-6)}
+@media(max-width:640px){.company-grid{grid-template-columns:1fr}}
+.company-card{padding:var(--sp-4) var(--sp-5);cursor:pointer;transition:.15s var(--ease)}
+.company-card:hover{border-color:var(--accent);box-shadow:var(--shadow-md)}
+.company-card.active{border-color:var(--accent);background:var(--accent-soft);box-shadow:var(--ring)}
+.company-name{font-size:16px;font-weight:700;color:var(--accent);letter-spacing:-.01em}
+.company-role{margin-top:2px;font-size:12.5px;color:var(--text-2)}
+.company-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--sp-3)}
+.ctag{padding:2px 8px;border-radius:var(--r-sm);background:var(--surface-2);border:1px solid var(--border);font-size:11px;color:var(--text-2)}
+.company-card.active .ctag{background:var(--surface);border-color:var(--accent-hover);color:var(--accent)}
+
+.framing-box{display:none;padding:var(--sp-5);margin-bottom:var(--sp-4)}
+.framing-box.open{display:block;animation:fadeUp .2s var(--ease)}
+.framing-text{margin:8px 0 16px;font-size:13.5px;color:var(--warn-fg);line-height:1.65;
+  background:var(--warn-bg);border-left:3px solid var(--warn);border-radius:var(--r-md);padding:var(--sp-4)}
+.follow-up-text{font-size:13.5px;color:var(--info-fg);line-height:1.65;
+  background:var(--info-bg);border-left:3px solid var(--accent);border-radius:var(--r-md);padding:var(--sp-4)}
+
+.simulator{display:none;overflow:hidden}
+.simulator.open{display:block;animation:fadeUp .2s var(--ease)}
+.sim-head{background:linear-gradient(145deg,var(--navy-600),var(--navy-800));padding:var(--sp-4) var(--sp-5);
+  display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.sim-head h3{color:#fff;font-size:15px;font-weight:600}
+.sim-controls{display:flex;gap:8px}
+
+.q-box{padding:var(--sp-6);border-bottom:1px solid var(--border)}
+.q-text{font-size:15.5px;font-weight:550;line-height:1.6;background:var(--surface-2);
+  border-left:4px solid var(--accent);border-radius:var(--r-md);padding:var(--sp-5)}
+.fu-hint{display:none;margin-top:var(--sp-3);font-size:12.5px;color:var(--warn-fg);
+  background:var(--warn-bg);border-radius:var(--r-sm);padding:8px 12px}
+
+.a-box{padding:var(--sp-5) var(--sp-6);border-bottom:1px solid var(--border)}
+.a-actions{display:flex;align-items:center;gap:10px;margin-top:var(--sp-3);flex-wrap:wrap}
+.hint-text{font-size:12px;color:var(--text-3)}
+.star-reveal{display:none;margin-top:var(--sp-3);background:var(--success-bg);border-left:3px solid var(--success);
+  border-radius:var(--r-md);padding:var(--sp-4);font-size:13.5px;color:var(--success-fg);line-height:1.75}
+.star-reveal.open{display:block;animation:fadeUp .2s var(--ease)}
+
+.fb-box{display:none;padding:var(--sp-6)}
+.fb-box.open{display:block;animation:fadeUp .2s var(--ease)}
+.fb-score-row{display:flex;align-items:center;gap:var(--sp-4);margin-bottom:var(--sp-4)}
+.score-circle{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-mono);
+  font-size:19px;font-weight:700;flex-shrink:0;background:var(--neutral-bg);color:var(--neutral-fg);border:2px solid var(--neutral-bd)}
+.score-circle.hi{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-bd)}
+.score-circle.mid{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
+.score-circle.lo{background:var(--danger-bg);color:var(--danger-fg);border-color:var(--danger-bd)}
+.fb-verdict{font-size:14px;color:var(--text);line-height:1.6}
+.fb-block{border-radius:var(--r-md);padding:var(--sp-4);font-size:13.5px;line-height:1.65;margin-bottom:var(--sp-3)}
+.fb-strong{background:var(--success-bg);border-left:3px solid var(--success);color:var(--success-fg)}
+.fb-improve{background:var(--warn-bg);border-left:3px solid var(--warn);color:var(--warn-fg)}
+.fb-model{background:var(--info-bg);border-left:3px solid var(--accent);color:var(--info-fg)}
+.fb-next{display:flex;gap:10px;margin-top:var(--sp-2)}
+
+.empty-state{text-align:center;padding:var(--sp-12) var(--sp-6);border:1px dashed var(--border-strong);
+  border-radius:var(--r-lg);background:var(--surface);color:var(--text-2)}
+.empty-state h3{font-size:16px;color:var(--text);margin-bottom:8px}
 </style>
 </head>
 <body>
-<header>
-  <h1>Interview Simulator</h1>
-  <div class="nav">
-    <a href="/">Jobs</a>
-    <a href="/governance">Governance</a>
-    <a href="/skills">Skills</a>
-    <a href="/simulate" class="active">Simulate</a>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="/"><span class="brand-mark">JA</span><span class="brand-text">Job Apply</span></a>
+    <nav class="nav">
+      <a class="nav-link" href="/">Dashboard</a>
+      <a class="nav-link" href="/governance">Governance</a>
+      <a class="nav-link" href="/skills">Skills</a>
+      <a class="nav-link active" href="/simulate">Simulate</a>
+      <a class="nav-link" href="/settings">Settings</a>
+    </nav>
+    <div class="appbar-actions">
+      <button class="icon-btn" type="button" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="theme-glyph">◐</span></button>
+    </div>
   </div>
 </header>
-<div class="page">
+
+<main class="page">
+  <div class="page-head">
+    <div class="eyebrow">Practice</div>
+    <h1 class="h1" style="margin-top:4px">Interview Simulator</h1>
+    <p class="muted" style="margin:6px 0 0">Pick a company, answer as if you're in the room, get scored like a real interviewer would.</p>
+  </div>
+
   <div class="company-grid">
     {% for company in companies %}
-    <div class="company-card" id="co-{{ company.id }}" onclick="selectCompany('{{ company.id }}')">
+    <div class="card company-card" id="co-{{ company.id }}" onclick="selectCompany('{{ company.id }}')">
       <div class="company-name">{{ company.name }}</div>
       <div class="company-role">{{ company.role }}</div>
       <div class="company-tags">
@@ -96,63 +223,79 @@ textarea:focus { outline: none; border-color: #1F4E79; }
     </div>
     {% endfor %}
   </div>
-  <div class="framing-box" id="framing-box">
-    <div class="framing-label">How this company thinks</div>
+
+  <div class="card framing-box" id="framing-box">
+    <div class="eyebrow" style="margin-bottom:6px">How this company thinks</div>
     <div class="framing-text" id="framing-text"></div>
-    <div class="framing-label">Their follow-up pattern</div>
+    <div class="eyebrow" style="margin-bottom:6px">Their follow-up pattern</div>
     <div class="follow-up-text" id="follow-up-text"></div>
   </div>
-  <div class="simulator" id="simulator">
-    <div class="sim-header">
+
+  <div class="card simulator" id="simulator">
+    <div class="sim-head">
       <h3 id="sim-title">Interview Question</h3>
       <div class="sim-controls">
-        <button class="btn-sm btn-skill" onclick="getSkillQuestion()">From my skills</button>
-        <button class="btn-sm btn-new" onclick="getNewQuestion()">New question</button>
+        <button class="btn btn-sm btn-on-accent" type="button" onclick="getSkillQuestion()">From my skills</button>
+        <button class="btn btn-sm btn-on-accent" type="button" onclick="getNewQuestion()">New question</button>
       </div>
     </div>
-    <div class="question-box">
-      <div class="q-label">Question</div>
-      <div class="question-text" id="question-text">Click a button above to get your first question</div>
-      <div class="follow-up-hint" id="follow-up-hint" style="display:none"></div>
+
+    <div class="q-box">
+      <div class="eyebrow" style="margin-bottom:10px">Question</div>
+      <div class="q-text" id="question-text">Click a button above to get your first question</div>
+      <div class="fu-hint" id="follow-up-hint"></div>
     </div>
-    <div class="answer-box">
-      <div class="answer-label">Your answer</div>
-      <textarea id="answer-input" placeholder="Type your answer. Use STAR format — Situation, Task, Action, Result. Aim for 2-4 minutes spoken."></textarea>
-      <div class="answer-actions">
-        <button class="btn-submit" id="btn-submit" onclick="submitAnswer()">Get feedback</button>
-        <button class="btn-show-star" id="btn-star" onclick="showStar()" style="display:none">Show STAR answer</button>
+
+    <div class="a-box">
+      <div class="eyebrow" style="margin-bottom:8px">Your answer</div>
+      <textarea class="textarea" id="answer-input" placeholder="Type your answer. Use STAR format — Situation, Task, Action, Result. Aim for 2-4 minutes spoken."></textarea>
+      <div class="a-actions">
+        <button class="btn btn-primary" type="button" id="btn-submit" onclick="submitAnswer()">Get feedback</button>
+        <button class="btn" type="button" id="btn-star" onclick="showStar()" style="display:none">Show STAR answer</button>
         <span class="hint-text" id="hint-text"></span>
       </div>
-      <div class="star-answer-box" id="star-answer-box"></div>
+      <div class="star-reveal" id="star-answer-box"></div>
     </div>
-    <div class="feedback-box" id="feedback-box">
-      <div class="fb-label">Feedback from <span id="fb-company-name"></span> perspective</div>
-      <div class="fb-score">
+
+    <div class="fb-box" id="feedback-box">
+      <div class="eyebrow" style="margin-bottom:10px">Feedback from <span id="fb-company-name"></span> perspective</div>
+      <div class="fb-score-row">
         <div class="score-circle" id="score-circle">-</div>
         <div class="fb-verdict" id="fb-verdict"></div>
       </div>
-      <div class="fb-label">What was strong</div>
-      <div class="fb-strong" id="fb-strong"></div>
-      <div class="fb-label">What to improve</div>
-      <div class="fb-improve" id="fb-improve"></div>
-      <div class="fb-label">Model answer for this company</div>
-      <div class="fb-model" id="fb-model"></div>
-      <div class="next-actions">
-        <button class="btn-next" onclick="getNewQuestion()">Next question</button>
-        <button class="btn-harder" onclick="getHarderQuestion()">Make it harder</button>
+      <div class="eyebrow" style="margin-bottom:6px">What was strong</div>
+      <div class="fb-block fb-strong" id="fb-strong"></div>
+      <div class="eyebrow" style="margin-bottom:6px">What to improve</div>
+      <div class="fb-block fb-improve" id="fb-improve"></div>
+      <div class="eyebrow" style="margin-bottom:6px">Model answer for this company</div>
+      <div class="fb-block fb-model" id="fb-model"></div>
+      <div class="fb-next">
+        <button class="btn btn-primary" type="button" onclick="getNewQuestion()">Next question</button>
+        <button class="btn btn-danger" type="button" onclick="getHarderQuestion()">Make it harder</button>
       </div>
     </div>
   </div>
+
   <div class="empty-state" id="empty-state">
     <h3>Select a company to start</h3>
-    <p>Each company has a different framing and follow-up pattern. Pick one and practice until the answers feel natural.</p>
+    <p class="muted">Each company has a different framing and follow-up pattern. Pick one and practice until the answers feel natural.</p>
   </div>
-</div>
+</main>
+
 <script>
+/* ---------- theme ---------- */
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
+  var g=document.getElementById('theme-glyph'); if(g) g.textContent = t==='dark' ? '◑' : '◐';}
+function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  try{localStorage.setItem('ja-theme',t);}catch(e){} applyTheme(t);}
+try{applyTheme(localStorage.getItem('ja-theme')||'light');}catch(e){}
+
+/* ---------- simulator ---------- */
 var currentCompany = null;
 var currentQuestion = null;
 var currentSkillId = null;
 var allCompanies = {{ companies | tojson }};
+
 function selectCompany(id) {
   document.querySelectorAll('.company-card').forEach(function(c){ c.classList.remove('active'); });
   document.getElementById('co-' + id).classList.add('active');
@@ -167,6 +310,7 @@ function selectCompany(id) {
   document.getElementById('fb-company-name').textContent = currentCompany.name;
   resetAnswer();
 }
+
 function getNewQuestion() {
   if (!currentCompany) return;
   currentSkillId = null;
@@ -174,22 +318,20 @@ function getNewQuestion() {
   var q = questions[Math.floor(Math.random() * questions.length)];
   setQuestion(q, null);
 }
+
 function getSkillQuestion() {
   if (!currentCompany) {
     alert('Please select a company first');
     return;
   }
-  console.log('Fetching skill question for company:', currentCompany.id);
   fetch('/api/simulate/question?company=' + currentCompany.id)
     .then(function(r){ return r.json(); })
     .then(function(data){
-      console.log('Skill question response:', data);
       if (data.error) { alert('Error: ' + data.error); return; }
       if (data.question) {
         currentSkillId = data.skill_id || null;
         setQuestion(data.question, data.star_answer || null);
         if (data.skill_concept) document.getElementById('hint-text').textContent = 'Skill: ' + data.skill_concept;
-        // Auto-show STAR answer so you know what you actually did
         if (data.star_answer) {
           var starBox = document.getElementById('star-answer-box');
           starBox.classList.add('open');
@@ -197,8 +339,9 @@ function getSkillQuestion() {
         }
       }
     })
-    .catch(function(e){ console.error('Fetch error:', e); alert('Request failed: ' + e.message); });
+    .catch(function(e){ alert('Request failed: ' + e.message); });
 }
+
 function getHarderQuestion() {
   if (!currentCompany || !currentQuestion) return;
   fetch('/api/simulate/harder', {
@@ -208,6 +351,7 @@ function getHarderQuestion() {
     if (data.question) setQuestion(data.question, null);
   });
 }
+
 function setQuestion(q, starAnswer) {
   currentQuestion = q;
   document.getElementById('question-text').textContent = q;
@@ -218,30 +362,33 @@ function setQuestion(q, starAnswer) {
   document.getElementById('star-answer-box').textContent = '';
   resetAnswer();
   if (starAnswer) {
-    document.getElementById('btn-star').style.display = 'inline-block';
+    document.getElementById('btn-star').style.display = 'inline-flex';
     document.getElementById('star-answer-box').textContent = starAnswer;
   } else {
     document.getElementById('btn-star').style.display = 'none';
   }
 }
+
 function showStar() {
   var box = document.getElementById('star-answer-box');
   box.classList.toggle('open');
   document.getElementById('btn-star').textContent = box.classList.contains('open') ? 'Hide STAR answer' : 'Show STAR answer';
 }
+
 function resetAnswer() {
   document.getElementById('answer-input').value = '';
   document.getElementById('btn-submit').disabled = false;
   document.getElementById('btn-submit').textContent = 'Get feedback';
   document.getElementById('hint-text').textContent = '';
 }
+
 function submitAnswer() {
   var answer = document.getElementById('answer-input').value.trim();
   if (!answer || answer.length < 20) { alert('Please write a more complete answer.'); return; }
   if (!currentQuestion) { alert('Please select a question first.'); return; }
   var btn = document.getElementById('btn-submit');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Analysing...';
+  btn.innerHTML = '<span class="spinner"></span> Analysing…';
   document.getElementById('feedback-box').classList.remove('open');
   fetch('/api/simulate/feedback', {
     method: 'POST', headers: {'Content-Type':'application/json'},
@@ -252,13 +399,13 @@ function submitAnswer() {
     var score = data.score || 0;
     var circle = document.getElementById('score-circle');
     circle.textContent = score;
-    circle.className = 'score-circle ' + (score >= 80 ? 'score-90' : score >= 60 ? 'score-70' : 'score-50');
+    circle.className = 'score-circle ' + (score >= 80 ? 'hi' : score >= 60 ? 'mid' : 'lo');
     document.getElementById('fb-verdict').textContent = data.verdict || '';
     document.getElementById('fb-strong').textContent = data.strong || '';
     document.getElementById('fb-improve').textContent = data.improve || '';
     document.getElementById('fb-model').textContent = data.model_answer || '';
     document.getElementById('feedback-box').classList.add('open');
-    document.getElementById('feedback-box').scrollIntoView({behavior:'smooth',block:'start'});
+    document.getElementById('feedback-box').scrollIntoView({behavior:'smooth', block:'start'});
   }).catch(function(e){ btn.disabled = false; btn.textContent = 'Get feedback'; alert('Failed. Try again.'); });
 }
 </script>

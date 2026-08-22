@@ -1,53 +1,46 @@
 import json
 import hashlib
+import re
 from datetime import datetime
 from jobspy import scrape_jobs
 from dotenv import load_dotenv
 from db import get_db
+from profile_store import get_profile as get_stored_profile
 load_dotenv()
 
-RESUME_PATH = "master_resume.json"
+# Results requested per market, by work mode — same figures the old
+# per-pass hardcoding used (remote passes searched hardest, on-site least).
+RESULTS_BY_MODE = {"remote": 25, "hybrid": 20, "contract": 15, "on-site": 15}
+DEFAULT_RESULTS = 15
 
-CORE_TITLES = [
-    "Senior Data Analyst", "Senior BI Analyst", "Senior Business Intelligence Analyst",
-    "Senior Reporting Analyst", "Senior Analytics Analyst", "Senior Marketing Analyst",
-    "Senior Campaign Analyst", "Analytics Manager", "BI Manager", "Reporting Manager",
-    "Analytics Lead", "BI Lead", "Insights Manager", "Campaign Analytics Manager",
-    "Revenue Analytics Manager", "Performance Analytics Manager",
-    "Data Analyst", "BI Analyst", "Business Intelligence Analyst",
-    "Reporting Analyst", "Analytics Analyst", "Marketing Analytics Analyst",
-    "Customer Analytics Analyst", "CRM Analyst", "Campaign Analyst",
-    "Insights Analyst", "Performance Analyst", "Revenue Analyst",
-    "Commercial Analyst", "Growth Analytics Analyst", "Financial Analyst",
-    "Power BI Analyst", "Power BI Developer", "BI Developer", "BI Engineer",
-    "Data Visualization Analyst", "Dashboard Developer", "Reporting Developer",
-    "Tableau Developer", "Tableau Analyst", "CRM Analytics Analyst",
-    "Customer Intelligence Analyst", "Data and Reporting Analyst",
-    "Business Insights Analyst", "Decision Support Analyst",
-    "Analytics Consultant", "Performance Measurement Analyst",
-    "Loyalty Analytics Analyst", "Revenue Analytics Analyst",
-    "Data Analyst Finance", "Campaign Performance Analyst",
-]
-
-OTTAWA_TITLES = [
-    "Senior Data Analyst", "Data Analyst", "Senior BI Analyst", "BI Analyst",
-    "Power BI Analyst", "Senior Reporting Analyst", "Reporting Analyst",
-    "Business Intelligence Analyst", "Data and Reporting Analyst",
-    "Performance Measurement Analyst", "Senior Analytics Analyst",
-    "Analytics Analyst", "Revenue Analytics Analyst", "Analytics Manager",
-    "Reporting Manager", "Decision Support Analyst", "Business Insights Analyst",
-]
-
-CONTRACT_TITLES = [
-    "Data Analyst contract", "BI Analyst contract", "Analytics Analyst contract",
-    "Reporting Analyst contract", "Campaign Analytics contract",
-    "Business Intelligence contract", "Power BI contract",
-]
 
 def load_config():
-    with open(RESUME_PATH) as f:
-        data = json.load(f)
-    return data["job_search_config"]
+    """Same shape as before ({'target_titles': [...], 'exclude_keywords': [...]})
+    — only the source changed, from master_resume.json's job_search_config
+    to the profile table."""
+    stored = get_stored_profile()
+    if not stored:
+        raise RuntimeError("Profile table missing its seed row — run init_db() first.")
+    return {
+        "target_titles": stored["target_titles"],
+        "exclude_keywords": stored["exclude_keywords"],
+    }
+
+
+def market_pass_name(market):
+    """Derive a stable, human-readable search_pass slug from a user-defined
+    market row ({"location": ..., "mode": ..., "country": ...}) — replaces
+    the old fixed set of pass names (canada_remote, ottawa, us_remote, ...).
+
+    Note: app.py's stats cards and index.html's market filter dropdown still
+    reference the original fixed slugs (canada / ottawa / us_remote / ...)
+    directly — a market whose slug doesn't happen to match one of those
+    won't show up in that dashboard filtering yet. Jobs are still saved and
+    scored normally either way; making the dashboard side fully dynamic too
+    is a follow-up beyond this backend change."""
+    loc_slug = re.sub(r'[^a-z0-9]+', '_', (market.get("location") or "").lower()).strip('_') or "anywhere"
+    mode_slug = (market.get("mode") or "").lower().replace(" ", "_").replace("-", "_")
+    return f"{loc_slug}_{mode_slug}" if mode_slug else loc_slug
 
 def init_db():
     """Ensure the Postgres schema exists (idempotent — see schema.sql)."""
@@ -83,7 +76,10 @@ def detect_visa_required(description):
     return any(s in text for s in ["sponsorship not available","no sponsorship","us citizens only"])
 
 def run_search(titles, location, country, exclude_keywords,
-               is_remote_search=False, results=25, pass_name="canada"):
+               is_remote_search=False, results=25, pass_name="canada", mode=""):
+    """mode is the market's own work-mode ("remote"/"hybrid"/"contract"/"on-site"),
+    used for the same post-filtering the old code keyed off specific pass_name
+    strings — pass_name itself is now just the label saved onto each job."""
     all_jobs = []
     for title in titles:
         try:
@@ -109,13 +105,13 @@ def run_search(titles, location, country, exclude_keywords,
                 description = str(row.get("description", ""))
                 is_remote = 1 if detect_remote(job_title, description) else 0
                 is_contr = 1 if detect_contract(job_title, description) else 0
-                if pass_name == "canada_remote" and not is_remote:
+                if mode == "remote" and not is_remote:
                     excluded += 1
                     continue
-                if pass_name == "canada_hybrid" and not detect_hybrid(job_title, description):
+                if mode == "hybrid" and not detect_hybrid(job_title, description):
                     excluded += 1
                     continue
-                if pass_name == "contract" and not is_contr:
+                if mode == "contract" and not is_contr:
                     excluded += 1
                     continue
                 all_jobs.append({
@@ -184,28 +180,32 @@ def run_scrape():
     print(f"Job scrape started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*50)
     init_db()
-    config = load_config()
-    exclude = config.get("exclude_keywords", [])
+
+    stored = get_stored_profile()
+    if not stored or not stored.get("target_titles") or not stored.get("markets"):
+        print("  No profile configured yet (target roles and/or search markets are "
+              "empty) — visit /settings before running a scrape. Skipping.")
+        return 0
+
+    titles = stored["target_titles"]
+    exclude = stored["exclude_keywords"]
+    markets = stored["markets"]
     all_jobs = []
 
-    print("\n--- Pass 1: Canada Remote ---")
-    all_jobs.extend(run_search(CORE_TITLES, "Canada", "canada", exclude,
-                               is_remote_search=True, results=25, pass_name="canada_remote"))
-    print("\n--- Pass 2: Canada Hybrid ---")
-    all_jobs.extend(run_search(CORE_TITLES, "Canada", "canada", exclude,
-                               results=20, pass_name="canada_hybrid"))
-    print("\n--- Pass 3: Canada Wide ---")
-    all_jobs.extend(run_search(CORE_TITLES, "Canada", "canada", exclude,
-                               results=15, pass_name="canada"))
-    print("\n--- Pass 4: Ottawa ---")
-    all_jobs.extend(run_search(OTTAWA_TITLES, "Ottawa, Ontario", "canada", exclude,
-                               results=20, pass_name="ottawa"))
-    print("\n--- Pass 5: US Remote ---")
-    all_jobs.extend(run_search(CORE_TITLES, "United States", "us", exclude,
-                               is_remote_search=True, results=20, pass_name="us_remote"))
-    print("\n--- Pass 6: Contract ---")
-    all_jobs.extend(run_search(CONTRACT_TITLES, "Canada", "canada", exclude,
-                               results=15, pass_name="contract"))
+    for i, market in enumerate(markets, start=1):
+        location = market.get("location") or ""
+        mode = (market.get("mode") or "").lower()
+        country = "us" if (market.get("country") or "").lower().startswith("united") else "canada"
+        pass_name = market_pass_name(market)
+        results = RESULTS_BY_MODE.get(mode, DEFAULT_RESULTS)
+
+        print(f"\n--- Market {i}/{len(markets)}: {location or 'anywhere'} "
+              f"({mode or 'any mode'}, {country}) -> pass '{pass_name}' ---")
+        all_jobs.extend(run_search(
+            titles, location, country, exclude,
+            is_remote_search=(mode == "remote"), results=results,
+            pass_name=pass_name, mode=mode,
+        ))
 
     print("\n--- Saving results ---")
     total_new = save_jobs(all_jobs)

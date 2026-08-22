@@ -11,16 +11,22 @@ from datetime import datetime
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from db import get_db
+from profile_store import get_profile as get_stored_profile
 
 load_dotenv()
 
-RESUME_PATH = "master_resume.json"
 client = Anthropic()
 
 
 def load_profile():
-    with open(RESUME_PATH) as f:
-        data = json.load(f)
+    """Same shape as before — sourced from the profile table instead of
+    master_resume.json now. See scorer.load_profile() for the same change."""
+    stored = get_stored_profile()
+    if not stored or not stored.get("resume_json"):
+        raise RuntimeError(
+            "No resume on file yet — visit /settings before running a batch."
+        )
+    data = stored["resume_json"]
     return {
         "name": data["name"],
         "summary": data["summary"],
@@ -38,7 +44,7 @@ def load_profile():
             }
             for r in data["experience"]
         ],
-        "target_titles": data["job_search_config"]["target_titles"]
+        "target_titles": stored["target_titles"]
     }
 
 

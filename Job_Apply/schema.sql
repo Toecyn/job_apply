@@ -53,6 +53,38 @@ CREATE TABLE IF NOT EXISTS batch_jobs (
     jobs_scored INTEGER DEFAULT 0
 );
 
+-- Single-row user profile — replaces master_resume.json as the source of
+-- truth for target titles, exclusions, scoring keywords, search markets,
+-- and resume content. Single-tenant for now: id is always 1. Going
+-- multi-tenant later means swapping id for a real account_id and dropping
+-- the DEFAULT 1 / seed row below.
+--
+-- target_titles, exclude_keywords, score_keywords, markets, resume_json
+-- hold JSON, stored as TEXT and hand-encoded/decoded in profile_store.py —
+-- matching how jobs.score_reasons/score_gaps already do it in this schema,
+-- rather than introducing native jsonb handling for just one table.
+CREATE TABLE IF NOT EXISTS profile (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    target_titles TEXT DEFAULT '[]',
+    exclude_keywords TEXT DEFAULT '[]',
+    score_keywords TEXT DEFAULT '[]',
+    markets TEXT DEFAULT '[]',
+    open_to_remote INTEGER DEFAULT 1,
+    visa_required INTEGER DEFAULT 0,
+    country TEXT DEFAULT 'canada',
+    min_score_default INTEGER DEFAULT 70,
+    stale_days INTEGER DEFAULT 7,
+    brand_color TEXT DEFAULT '1F4E79',
+    resume_json TEXT DEFAULT NULL,
+    resume_file_url TEXT DEFAULT NULL,
+    resume_filename TEXT DEFAULT NULL,
+    updated_at TEXT
+);
+
+-- Seed the single row so get_profile() always has something to read/upsert
+-- against, even before anyone has visited /settings.
+INSERT INTO profile (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
 CREATE INDEX IF NOT EXISTS idx_jobs_is_stale ON jobs (is_stale);
 CREATE INDEX IF NOT EXISTS idx_jobs_score ON jobs (score);
 CREATE INDEX IF NOT EXISTS idx_jobs_search_pass ON jobs (search_pass);

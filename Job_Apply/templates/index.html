@@ -1,598 +1,708 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Job Apply Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; color: #1a1a1a; }
-header { background: #1F4E79; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-header h1 { font-size: 18px; font-weight: 600; }
-.btn-refresh { background: white; color: #1F4E79; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-block; }
-.btn-refresh:hover { background: #e8f0f7; }
-.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 16px 24px 8px; }
-.stats2 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 0 24px 12px; }
-.scard { background: white; border-radius: 8px; padding: 14px 16px; border: 1px solid #e5e5e5; text-decoration: none; display: block; }
-.scard:hover { border-color: #1F4E79; }
-.scard.active { border-color: #1F4E79; background: #e8f0f7; }
-.scard .num { font-size: 26px; font-weight: 700; }
-.scard .lbl { font-size: 11px; color: #666; margin-top: 3px; }
-.green { color: #1e7e34; } .amber { color: #856404; } .red { color: #c0392b; } .blue { color: #1F4E79; }
-.filters { background: white; border-bottom: 1px solid #e5e5e5; padding: 12px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.filters form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; width: 100%; }
-.filters select, .filters input[type=number] { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: white; }
-.filters label { font-size: 13px; color: #444; }
-.btn-filter { background: #1F4E79; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
-.count { padding: 8px 24px; font-size: 13px; color: #666; }
-.jobs { padding: 0 24px 24px; }
-.jcard { background: white; border-radius: 8px; border: 1px solid #e5e5e5; margin-bottom: 10px; overflow: hidden; }
-.jcard:hover { border-color: #1F4E79; }
-.jcard.applied-card { border-color: #1e7e34; }
-.jtop { padding: 14px 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.jinfo { flex: 1; min-width: 0; }
-.jtitle { font-size: 15px; font-weight: 600; }
-.jmeta { font-size: 12px; color: #666; margin-top: 4px; }
-.jbadges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
-.badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-.score-badge { padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: 700; }
-.s85 { background: #e6f4ea; color: #1e7e34; } .s70 { background: #fff3cd; color: #856404; } .s50 { background: #fde8e8; color: #c0392b; }
-.p-canada { background: #e8f4e8; color: #1e7e34; } .p-ottawa { background: #fff3cd; color: #856404; } .p-us_remote { background: #fde8e8; color: #c0392b; }
-.b-remote { background: #f0e8ff; color: #6b35c7; } .b-source { background: #e8f0f7; color: #1F4E79; }
-.jbody { padding: 0 16px 16px; border-top: 1px solid #f0f0f0; }
-.why { background: #f8f9fa; border-radius: 6px; padding: 12px; margin: 12px 0; font-size: 12px; }
-.why h4 { font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #333; }
-.why ul { padding-left: 16px; }
-.why li { margin-bottom: 3px; color: #555; line-height: 1.5; }
-.jdesc { font-size: 13px; color: #444; line-height: 1.6; max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 12px; border-radius: 6px; white-space: pre-wrap; margin: 8px 0; }
-.jactions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
-.btn-view { background: white; color: #1F4E79; border: 1px solid #1F4E79; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; }
-.btn-tailor { background: #1F4E79; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; }
-.btn-reuse { background: #1e7e34; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; }
-.btn-tailor:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-view:hover { background: #e8f0f7; }
-.btn-tailor:hover:not(:disabled) { background: #174069; }
-.btn-reuse:hover { background: #155a27; }
-.status-form { display: flex; gap: 6px; align-items: center; }
-.status-form select { font-size: 12px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; }
-.status-form button { font-size: 12px; padding: 4px 10px; border: none; background: #e5e5e5; border-radius: 4px; cursor: pointer; }
-.toggle-btn { background: none; border: none; color: #1F4E79; font-size: 12px; cursor: pointer; padding: 4px 0; text-decoration: underline; }
-.jdetail { display: none; }
-.jdetail.open { display: block; }
-.tailor-result { background: #e8f4e8; border-radius: 6px; padding: 12px; margin-top: 10px; font-size: 13px; color: #1e7e34; }
-.empty { text-align: center; padding: 60px; color: #888; }
+/* ============================================================
+   JOB APPLY — DESIGN SYSTEM (shared across all templates)
+   ============================================================ */
+:root{
+  --font-ui:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 
-/* FOLLOW UP PANEL */
-.followup-panel { margin-top: 12px; border: 1px solid #c8e6c9; border-radius: 8px; overflow: hidden; }
-.followup-header { background: #e8f5e9; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
-.followup-header strong { font-size: 13px; color: #1e7e34; }
-.followup-header span { font-size: 11px; color: #666; }
-.followup-item { padding: 10px 14px; border-top: 1px solid #e8f5e9; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.followup-item:hover { background: #f8fdf8; }
-.followup-info { flex: 1; min-width: 0; }
-.followup-title { font-size: 13px; font-weight: 500; color: #1a1a1a; }
-.followup-meta { font-size: 11px; color: #666; margin-top: 2px; }
-.followup-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-.reuse-result { font-size: 12px; color: #1e7e34; margin-top: 4px; }
+  /* brand navy scale */
+  --navy-50:#eef4fa; --navy-100:#d9e6f3; --navy-200:#b3cce6;
+  --navy-400:#3f74a6; --navy-500:#2a5f92; --navy-600:#1F4E79;
+  --navy-700:#183c5e; --navy-800:#122d47; --navy-900:#0c1f31;
 
-/* INTAKE MODAL */
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
-.modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
-.modal { background: white; border-radius: 10px; width: 100%; max-width: 680px; overflow: hidden; }
-.modal-header { background: #1F4E79; color: white; padding: 20px 24px; }
-.modal-header h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-.modal-header p { font-size: 13px; color: #b8d4f0; }
-.modal-body { padding: 24px; }
-.modal-footer { padding: 16px 24px; background: #f8f9fa; border-top: 1px solid #e5e5e5; display: flex; gap: 10px; justify-content: flex-end; }
-.intake-context { background: #e8f4f8; border-radius: 6px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #1F4E79; line-height: 1.5; }
-.intake-question { margin-bottom: 20px; border: 1px solid #e5e5e5; border-radius: 8px; padding: 16px; }
-.intake-question:hover { border-color: #1F4E79; }
-.q-header { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
-.q-role { background: #e8f0f7; color: #1F4E79; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
-.q-text { font-size: 14px; color: #1a1a1a; font-weight: 500; flex: 1; }
-.q-why { font-size: 12px; color: #888; margin-bottom: 10px; font-style: italic; }
-.q-yesno { display: flex; gap: 8px; }
-.q-yesno button { padding: 8px 20px; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; font-size: 13px; background: white; }
-.q-yesno button.selected-yes { background: #1F4E79; color: white; border-color: #1F4E79; }
-.q-yesno button.selected-no { background: #f0f0f0; color: #666; border-color: #ddd; }
-.q-detail { margin-top: 10px; display: none; }
-.q-detail.open { display: block; }
-.q-detail textarea, .q-sentence textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 60px; }
-.q-detail label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
-.loading-intake { text-align: center; padding: 40px; color: #666; }
-.loading-intake .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #e5e5e5; border-top-color: #1F4E79; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.btn-cancel { background: white; color: #666; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-.btn-generate { background: #1F4E79; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
-.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; }
-.gate-scores { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 12px; }
-.gate-score { background: #f8f9fa; border-radius: 6px; padding: 10px; text-align: center; }
-.gate-score .gs-label { font-size: 11px; color: #666; margin-bottom: 4px; }
-.gate-score .gs-value { font-size: 16px; font-weight: 700; color: #1F4E79; }
+  /* neutrals */
+  --n-0:#ffffff; --n-25:#fcfcfd; --n-50:#f7f8fa; --n-100:#f0f2f5; --n-200:#e6e9ef;
+  --n-300:#d3d8e0; --n-400:#aab2bf; --n-500:#79828f; --n-600:#565f6c; --n-700:#3b434e;
+  --n-800:#252b33; --n-900:#12161b;
+
+  /* semantic (one set, used identically everywhere) */
+  --success:#0f7a4d; --success-fg:#08633d; --success-bg:#e9f8f0; --success-bd:#bfe8d4;
+  --warn:#b06a06;    --warn-fg:#8a5205;    --warn-bg:#fdf5e6;    --warn-bd:#f2ddb0;
+  --danger:#c0362b;  --danger-fg:#9c2b22;  --danger-bg:#fdeeec;  --danger-bd:#f5cdc8;
+  --info:#1F4E79;    --info-fg:#183c5e;    --info-bg:#eef4fa;    --info-bd:#cfe0ef;
+  --neutral-bg:#f0f2f5; --neutral-fg:#565f6c; --neutral-bd:#e6e9ef;
+
+  /* surfaces */
+  --bg:var(--n-100); --surface:var(--n-0); --surface-2:var(--n-50); --surface-3:var(--n-25);
+  --border:var(--n-200); --border-strong:var(--n-300);
+  --text:var(--n-900); --text-2:var(--n-600); --text-3:var(--n-500);
+  --accent:var(--navy-600); --accent-hover:var(--navy-700); --accent-soft:var(--navy-50);
+  --on-accent:#ffffff;
+
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-full:999px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px; --sp-12:56px;
+
+  --shadow-xs:0 1px 2px rgba(16,22,31,.05);
+  --shadow-sm:0 1px 3px rgba(16,22,31,.07),0 1px 2px rgba(16,22,31,.04);
+  --shadow-md:0 4px 14px -4px rgba(16,22,31,.12),0 2px 5px -2px rgba(16,22,31,.06);
+  --shadow-lg:0 24px 48px -18px rgba(12,31,49,.35),0 8px 20px -12px rgba(12,31,49,.2);
+  --ring:0 0 0 3px rgba(31,78,121,.18);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+html[data-theme="dark"]{
+  --bg:#0d1117; --surface:#141a22; --surface-2:#1a212b; --surface-3:#11171e;
+  --border:#242c37; --border-strong:#333d4a;
+  --text:#e8ecf1; --text-2:#a2adbb; --text-3:#7c8896;
+  --accent:#5b93c9; --accent-hover:#78a8d8; --accent-soft:#16283a; --on-accent:#08131d;
+  --success:#4ac489; --success-fg:#7fdcae; --success-bg:#0f2a1f; --success-bd:#1e4735;
+  --warn:#e2a340;   --warn-fg:#f0c179;    --warn-bg:#2b2113;    --warn-bd:#4a3a1c;
+  --danger:#e2695d; --danger-fg:#f19a91;  --danger-bg:#2c1614;  --danger-bd:#4d2723;
+  --info:#6fa6da;   --info-fg:#9cc4e8;    --info-bg:#15242f;    --info-bd:#263d51;
+  --neutral-bg:#1c232d; --neutral-fg:#a2adbb; --neutral-bd:#2a323d;
+  --shadow-lg:0 24px 60px -20px rgba(0,0,0,.7);
+  --ring:0 0 0 3px rgba(91,147,201,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-ui);font-size:14px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;letter-spacing:-.018em;font-weight:600}
+.h1{font-size:24px;line-height:1.2}
+.h2{font-size:17px;line-height:1.3}
+.h3{font-size:14px;line-height:1.35}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--text-2)}
+.dim{color:var(--text-3)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+
+/* ---------- app bar / nav ---------- */
+.appbar{position:sticky;top:0;z-index:50;background:color-mix(in oklab,var(--surface) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--border)}
+.appbar-inner{max-width:1180px;margin:0 auto;padding:0 var(--sp-6);height:58px;display:flex;align-items:center;gap:var(--sp-6)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.02em;flex-shrink:0}
+.brand-mark{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--navy-500),var(--navy-800));color:#fff;font-size:11px;font-weight:700;letter-spacing:.02em}
+.nav{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-link{padding:6px 11px;border-radius:var(--r-sm);font-size:13.5px;font-weight:500;color:var(--text-2);
+  white-space:nowrap;transition:background .15s var(--ease),color .15s var(--ease)}
+.nav-link:hover{background:var(--surface-2);color:var(--text)}
+.nav-link.active{color:var(--text);background:var(--accent-soft);font-weight:600}
+.appbar-actions{margin-left:auto;display:flex;align-items:center;gap:var(--sp-2)}
+.icon-btn{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);
+  display:grid;place-items:center;cursor:pointer;color:var(--text-2);transition:.15s var(--ease)}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+
+/* ---------- layout ---------- */
+.page{max-width:1180px;margin:0 auto;padding:var(--sp-8) var(--sp-6) 96px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-4);flex-wrap:wrap;margin-bottom:var(--sp-6)}
+.section{margin-top:var(--sp-8)}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 14px;border-radius:var(--r-sm);
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:13.5px;font-weight:550;
+  cursor:pointer;transition:.15s var(--ease);box-shadow:var(--shadow-xs);white-space:nowrap}
+.btn:hover{background:var(--surface-2);border-color:var(--n-400)}
+.btn:focus-visible{outline:none;box-shadow:var(--ring)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-ghost{border-color:transparent;background:transparent;box-shadow:none;color:var(--text-2)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:12.5px}
+.btn-block{width:100%}
+
+/* ---------- forms ---------- */
+.field{display:flex;flex-direction:column;gap:5px}
+.label{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
+.input,.select,.textarea{width:100%;padding:8px 11px;border-radius:var(--r-sm);border:1px solid var(--border-strong);
+  background:var(--surface);font-size:13.5px;transition:.15s var(--ease)}
+.select{appearance:none;padding-right:28px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.textarea{min-height:88px;resize:vertical;line-height:1.6}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-xs)}
+.stat-grid{display:grid;gap:var(--sp-3);grid-template-columns:repeat(3,1fr)}
+@media(max-width:860px){.stat-grid{grid-template-columns:1fr}}
+.stat{position:relative;overflow:hidden;padding:var(--sp-5);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);box-shadow:var(--shadow-xs);transition:.18s var(--ease)}
+.stat::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent);opacity:.85}
+.stat.is-success::before{background:var(--success)} .stat.is-warn::before{background:var(--warn)}
+.stat-value{font-family:var(--font-mono);font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.05;margin-top:6px}
+.stat-label{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3)}
+.stat-sub{margin-top:6px;font-size:12.5px;color:var(--text-3)}
+a.stat{display:block}
+a.stat:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:var(--border-strong)}
+a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shadow:var(--ring)}
+
+/* ---------- badges ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:var(--r-full);
+  font-size:11.5px;font-weight:600;letter-spacing:.01em;border:1px solid var(--neutral-bd);
+  background:var(--neutral-bg);color:var(--neutral-fg);white-space:nowrap}
+.badge-info{background:var(--info-bg);color:var(--info-fg);border-color:var(--info-bd)}
+.badge-success{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-bd)}
+.badge-warn{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
+.badge-danger{background:var(--danger-bg);color:var(--danger-fg);border-color:var(--danger-bd)}
+.badge-dot::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
+
+/* ---------- spinner ---------- */
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid color-mix(in oklab,currentColor 25%,transparent);
+  border-top-color:currentColor;display:inline-block;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============================================================
+   PAGE: DASHBOARD
+   ============================================================ */
+.filter-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto auto;gap:var(--sp-3);align-items:end;
+  padding:var(--sp-4);margin-top:var(--sp-4)}
+@media(max-width:900px){.filter-bar{grid-template-columns:repeat(2,1fr)}}
+.list-meta{display:flex;align-items:center;justify-content:space-between;margin:var(--sp-6) 0 var(--sp-3)}
+
+.job{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:var(--sp-5);margin-bottom:var(--sp-3);box-shadow:var(--shadow-xs);transition:.18s var(--ease)}
+.job:hover{box-shadow:var(--shadow-md);border-color:var(--border-strong)}
+.job.applied-card{border-color:var(--success-bd);background:linear-gradient(90deg,var(--success-bg),var(--surface) 42%)}
+.job-top{display:flex;gap:var(--sp-4);align-items:flex-start}
+.job-main{min-width:0;flex:1}
+.job-title{font-size:16.5px;font-weight:600;letter-spacing:-.02em;line-height:1.3}
+.job-company{margin-top:3px;font-size:13.5px;color:var(--text-2)}
+.job-company strong{font-weight:600;color:var(--text)}
+.sep{margin:0 7px;color:var(--n-400)}
+.job-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--sp-3)}
+
+.score{flex-shrink:0;width:56px;height:56px;border-radius:var(--r-md);display:grid;place-items:center;
+  font-family:var(--font-mono);font-size:20px;font-weight:600;letter-spacing:-.02em;border:1px solid transparent}
+.score-high{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-bd)}
+.score-mid{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
+.score-low{background:var(--neutral-bg);color:var(--neutral-fg);border-color:var(--neutral-bd)}
+.score-none{background:var(--neutral-bg);color:var(--text-3);border-color:var(--neutral-bd);font-size:16px}
+.score-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.score-cap{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+
+.job-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-2);margin-top:var(--sp-4);
+  padding-top:var(--sp-4);border-top:1px solid var(--border)}
+.status-form{display:flex;align-items:center;gap:6px;margin-left:auto}
+.status-form .select{width:auto;min-width:132px;padding:6px 28px 6px 10px;font-size:13px}
+
+.details{display:none;margin-top:var(--sp-4);border-top:1px solid var(--border);padding-top:var(--sp-4);animation:fadeUp .22s var(--ease)}
+.details.open{display:block}
+.detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+@media(max-width:760px){.detail-cols{grid-template-columns:1fr}}
+.reasons{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-4)}
+.reasons ul{margin:8px 0 0;padding-left:18px}
+.reasons li{margin-bottom:4px;color:var(--text-2);font-size:13px}
+.reasons.gaps{border-color:var(--warn-bd);background:var(--warn-bg)}
+.reasons.gaps li{color:var(--warn-fg)}
+.jd{margin-top:var(--sp-4);max-height:340px;overflow:auto;white-space:pre-wrap;font-size:13px;line-height:1.65;
+  color:var(--text-2);background:var(--surface-3);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-4)}
+
+.result-box{display:none;margin-top:var(--sp-4);border:1px solid var(--info-bd);background:var(--info-bg);
+  border-radius:var(--r-md);padding:var(--sp-4);animation:fadeUp .22s var(--ease)}
+.result-box.show{display:block}
+.gate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-3)}
+.gate{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;text-align:center}
+.gate .n{font-family:var(--font-mono);font-size:20px;font-weight:600}
+.gate .l{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);font-weight:600}
+
+.followup{margin-top:var(--sp-4)}
+.fu-panel{border:1px dashed var(--border-strong);border-radius:var(--r-md);padding:var(--sp-4);background:var(--surface-2);
+  animation:fadeUp .22s var(--ease)}
+.fu-row{display:flex;align-items:center;gap:var(--sp-3);padding:8px 0;border-top:1px solid var(--border)}
+.fu-row:first-of-type{border-top:none}
+.fu-row .t{flex:1;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.empty{text-align:center;padding:var(--sp-12) var(--sp-6);border:1px dashed var(--border-strong);border-radius:var(--r-lg);
+  background:var(--surface);color:var(--text-2)}
+.empty-mark{width:44px;height:44px;margin:0 auto var(--sp-3);border-radius:var(--r-md);display:grid;place-items:center;
+  background:var(--surface-2);border:1px solid var(--border);font-size:20px}
+
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;z-index:100;display:none;align-items:flex-start;justify-content:center;
+  padding:6vh var(--sp-4);background:rgba(12,31,49,.45);backdrop-filter:blur(3px);overflow-y:auto}
+.overlay.open{display:flex;animation:fadeIn .16s var(--ease)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:660px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);
+  box-shadow:var(--shadow-lg);animation:pop .22s var(--ease)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.modal-head{padding:var(--sp-5) var(--sp-6);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:var(--sp-4);align-items:flex-start}
+.modal-body{padding:var(--sp-5) var(--sp-6);max-height:62vh;overflow-y:auto}
+.modal-foot{padding:var(--sp-4) var(--sp-6);border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:var(--sp-2);
+  background:var(--surface-2);border-radius:0 0 var(--r-xl) var(--r-xl)}
+.q{border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-4);margin-bottom:var(--sp-3);background:var(--surface-2)}
+.q-text{font-weight:550;margin-bottom:var(--sp-3)}
+.yn{display:flex;gap:var(--sp-2)}
+.yn .btn.sel{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.loading-state{text-align:center;padding:var(--sp-10) var(--sp-4)}
+.loading-state .spinner{width:26px;height:26px;border-width:2.5px;color:var(--accent)}
+.loading-state p{margin:var(--sp-4) 0 0;font-weight:550}
+.loading-state small{color:var(--text-3)}
+.notice{padding:10px 12px;border-radius:var(--r-sm);font-size:13px;border:1px solid var(--border)}
+.notice-ok{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-bd)}
+.notice-err{background:var(--danger-bg);color:var(--danger-fg);border-color:var(--danger-bd)}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Job Apply Dashboard</h1>
-  <div style="display:flex;align-items:center;gap:12px">
-    <nav style="display:flex;gap:8px">
-      <a href="/" style="color:white;text-decoration:none;font-size:13px;padding:6px 14px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.2)">Jobs</a>
-      <a href="/governance" style="color:white;text-decoration:none;font-size:13px;padding:6px 14px;border:1px solid rgba(255,255,255,0.3);border-radius:6px">Governance</a>
-      <a href="/skills" style="color:white;text-decoration:none;font-size:13px;padding:6px 14px;border:1px solid rgba(255,255,255,0.3);border-radius:6px">Skills</a>
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="/"><span class="brand-mark">JA</span><span class="brand-text">Job Apply</span></a>
+    <nav class="nav">
+      <a class="nav-link active" href="/">Dashboard</a>
+      <a class="nav-link" href="/governance">Governance</a>
+      <a class="nav-link" href="/skills">Skills</a>
+      <a class="nav-link" href="/simulate">Simulate</a>
+      <a class="nav-link" href="/settings">Settings</a>
     </nav>
-    <button onclick="document.getElementById('add-job-modal').classList.add('open')" class="btn-refresh" style="background:#e8f0f7;color:#1F4E79;margin-right:8px">+ Add Job</button>
-    <form action="/refresh" method="post" style="display:inline">
-      <button type="submit" class="btn-refresh">Refresh Jobs</button>
-    </form>
+    <div class="appbar-actions">
+      <button class="icon-btn" type="button" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="theme-glyph">◐</span></button>
+      <button class="btn btn-sm" type="button" onclick="openAddJob()">+ Add Job</button>
+      <form action="/refresh" method="post" style="margin:0">
+        <button class="btn btn-sm btn-primary" type="submit">Refresh Jobs</button>
+      </form>
+    </div>
   </div>
 </header>
 
-<div class="stats">
-  <div class="scard">
-    <div class="num green">{{ stats.fresh_scored }}</div>
-    <div class="lbl">Fresh strong matches (72hrs, 70+)</div>
+<main class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Pipeline</div>
+      <h1 class="h1" style="margin-top:4px">Job Apply Dashboard</h1>
+      <p class="muted" style="margin:6px 0 0">Fresh roles, match scores, and tailored applications in one view.</p>
+    </div>
   </div>
-  <div class="scard">
-    <div class="num blue">{{ stats.high_match }}</div>
-    <div class="lbl">All strong matches (70+)</div>
-  </div>
-  <div class="scard">
-    <div class="num blue">{{ stats.applied }}</div>
-    <div class="lbl">Applied</div>
-  </div>
-</div>
 
-<div class="stats2">
-  <a href="/?market=canada&min_score={{ filters.min_score }}&fresh={{ '1' if filters.fresh else '0' }}" class="scard {% if filters.market == 'canada' %}active{% endif %}">
-    <div class="num green">{{ stats.canada }}</div>
-    <div class="lbl">Canada</div>
-  </a>
-  <a href="/?market=ottawa&min_score={{ filters.min_score }}&fresh={{ '1' if filters.fresh else '0' }}" class="scard {% if filters.market == 'ottawa' %}active{% endif %}">
-    <div class="num amber">{{ stats.ottawa }}</div>
-    <div class="lbl">Ottawa</div>
-  </a>
-  <a href="/?market=us_remote&min_score={{ filters.min_score }}&fresh={{ '1' if filters.fresh else '0' }}" class="scard {% if filters.market == 'us_remote' %}active{% endif %}">
-    <div class="num red">{{ stats.us }}</div>
-    <div class="lbl">US Remote</div>
-  </a>
-</div>
+  <!-- KPI ROW -->
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-label">Fresh &amp; scored</div>
+      <div class="stat-value">{{ stats.fresh_scored }}</div>
+      <div class="stat-sub">Scored in the current window</div>
+    </div>
+    <div class="stat is-success">
+      <div class="stat-label">High match</div>
+      <div class="stat-value">{{ stats.high_match }}</div>
+      <div class="stat-sub">Score 85 and above</div>
+    </div>
+    <div class="stat is-warn">
+      <div class="stat-label">Applied</div>
+      <div class="stat-value">{{ stats.applied }}</div>
+      <div class="stat-sub">Applications submitted</div>
+    </div>
+  </div>
 
-<div class="filters">
-  <form method="get" action="/">
-    <label>Status:</label>
-    <select name="status">
-      {% for s in ['all','new','reviewing','applied','interviewing','rejected','offer'] %}
-      <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>
-      {% endfor %}
-    </select>
-    <label>Market:</label>
-    <select name="market">
-      <option value="all" {% if filters.market == 'all' %}selected{% endif %}>All markets</option>
-      <option value="canada_remote" {% if filters.market == 'canada_remote' %}selected{% endif %}>Canada Remote</option>
-      <option value="canada_hybrid" {% if filters.market == 'canada_hybrid' %}selected{% endif %}>Canada Hybrid</option>
-      <option value="canada" {% if filters.market == 'canada' %}selected{% endif %}>Canada Wide</option>
-      <option value="ottawa" {% if filters.market == 'ottawa' %}selected{% endif %}>Ottawa</option>
-      <option value="us_remote" {% if filters.market == 'us_remote' %}selected{% endif %}>US Remote</option>
-      <option value="contract" {% if filters.market == 'contract' %}selected{% endif %}>Contract</option>
-    </select>
-    <label>Min score:</label>
-    <input type="number" name="min_score" value="{{ filters.min_score }}" min="0" max="100" style="width:70px">
-    <label>Fresh:</label>
-    <select name="fresh_hours">
-      <option value="0" {% if filters.fresh_hours == 0 %}selected{% endif %}>All time</option>
-      <option value="24" {% if filters.fresh_hours == 24 %}selected{% endif %}>Last 24hrs</option>
-      <option value="48" {% if filters.fresh_hours == 48 %}selected{% endif %}>Last 48hrs</option>
-      <option value="72" {% if filters.fresh_hours == 72 %}selected{% endif %}>Last 72hrs</option>
-    </select>
-    <button type="submit" class="btn-filter">Apply</button>
-    <a href="/" class="btn-view">Reset</a>
+  <!-- MARKET FILTER CARDS -->
+  <div class="section">
+    <div class="section-head"><h2 class="h2">Markets</h2><span class="dim" style="font-size:12.5px">Click to filter the list</span></div>
+    <div class="stat-grid">
+      <a class="stat {% if filters.market == 'canada' %}active{% endif %}" href="/?market=canada&min_score={{ filters.min_score }}&fresh={{ filters.fresh }}">
+        <div class="stat-label">Canada</div>
+        <div class="stat-value">{{ stats.canada }}</div>
+        <div class="stat-sub">Nationwide roles</div>
+      </a>
+      <a class="stat {% if filters.market == 'ottawa' %}active{% endif %}" href="/?market=ottawa&min_score={{ filters.min_score }}&fresh={{ filters.fresh }}">
+        <div class="stat-label">Ottawa</div>
+        <div class="stat-value">{{ stats.ottawa }}</div>
+        <div class="stat-sub">Local &amp; hybrid</div>
+      </a>
+      <a class="stat {% if filters.market == 'us_remote' %}active{% endif %}" href="/?market=us_remote&min_score={{ filters.min_score }}&fresh={{ filters.fresh }}">
+        <div class="stat-label">US Remote</div>
+        <div class="stat-value">{{ stats.us }}</div>
+        <div class="stat-sub">Remote-friendly US</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <form class="card filter-bar" method="get" action="/">
+    <div class="field">
+      <label class="label" for="f-status">Status</label>
+      <select class="select" id="f-status" name="status">
+        {% for s in ['all','new','reviewing','applied','interviewing','rejected','offer'] %}
+        <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label class="label" for="f-market">Market</label>
+      <select class="select" id="f-market" name="market">
+        <option value="all" {% if filters.market == 'all' %}selected{% endif %}>All markets</option>
+        <option value="canada_remote" {% if filters.market == 'canada_remote' %}selected{% endif %}>Canada remote</option>
+        <option value="canada_hybrid" {% if filters.market == 'canada_hybrid' %}selected{% endif %}>Canada hybrid</option>
+        <option value="canada" {% if filters.market == 'canada' %}selected{% endif %}>Canada</option>
+        <option value="ottawa" {% if filters.market == 'ottawa' %}selected{% endif %}>Ottawa</option>
+        <option value="us_remote" {% if filters.market == 'us_remote' %}selected{% endif %}>US remote</option>
+        <option value="contract" {% if filters.market == 'contract' %}selected{% endif %}>Contract</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="label" for="f-score">Min score</label>
+      <input class="input" type="number" id="f-score" name="min_score" value="{{ filters.min_score }}" min="0" max="100">
+    </div>
+    <div class="field">
+      <label class="label" for="f-fresh">Freshness</label>
+      <select class="select" id="f-fresh" name="fresh_hours">
+        <option value="0" {% if filters.fresh_hours == 0 %}selected{% endif %}>Any time</option>
+        <option value="24" {% if filters.fresh_hours == 24 %}selected{% endif %}>Last 24 hours</option>
+        <option value="48" {% if filters.fresh_hours == 48 %}selected{% endif %}>Last 48 hours</option>
+        <option value="72" {% if filters.fresh_hours == 72 %}selected{% endif %}>Last 72 hours</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" type="submit">Apply filters</button>
+    <a class="btn btn-ghost" href="/">Reset</a>
   </form>
-</div>
 
-<div class="count">{{ jobs|length }} jobs shown</div>
+  <div class="list-meta">
+    <h2 class="h2">{{ jobs|length }} jobs shown</h2>
+    <span class="dim" style="font-size:12.5px">Sorted by relevance</span>
+  </div>
 
-<div class="jobs">
-  {% if jobs %}
-    {% for job in jobs %}
-    <div class="jcard {% if job.status == 'applied' %}applied-card{% endif %}" id="card-{{ job.id }}">
-      <div class="jtop">
-        <div class="jinfo">
-          <div class="jtitle">{{ job.title }}</div>
-          <div class="jmeta">{{ job.company }} &nbsp;·&nbsp; {{ job.location }} &nbsp;·&nbsp; {{ job.date_posted if job.date_posted and job.date_posted != 'nan' else job.date_found[:10] }}</div>
-        </div>
-        <div class="jbadges">
-          <span class="score-badge {% if job.score is none %}s50{% elif job.score >= 85 %}s85{% elif job.score >= 70 %}s70{% else %}s50{% endif %}">{{ job.score if job.score is not none else '—' }}/100</span>
-          <span class="badge {% if job.search_pass == 'ottawa' %}p-ottawa{% elif job.search_pass == 'us_remote' %}p-us_remote{% else %}p-canada{% endif %}">{% if job.search_pass == 'ottawa' %}Ottawa{% elif job.search_pass == 'us_remote' %}US Remote{% else %}Canada{% endif %}</span>
-          {% if job.is_remote %}<span class="badge b-remote">Remote</span>{% endif %}
-          <span class="badge b-source">{{ job.source }}</span>
-        </div>
+  {% for job in jobs %}
+  <article class="job {% if job.status == 'applied' %}applied-card{% endif %}" id="card-{{ job.id }}">
+    <div class="job-top">
+      <div class="score-wrap">
+        {% if job.score %}
+        <div class="score {% if job.score >= 85 %}score-high{% elif job.score >= 70 %}score-mid{% else %}score-low{% endif %}">{{ job.score }}</div>
+        {% else %}
+        <div class="score score-none">—</div>
+        {% endif %}
+        <div class="score-cap">Match</div>
       </div>
-      <div class="jbody">
-        <button class="toggle-btn" onclick="this.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.classList.contains('open')?'Hide details':'Show details'">Show details</button>
-        <div class="jdetail">
-          {% if job.score_reasons %}
-          <div class="why">
-            <h4>Why it matched</h4>
-            <ul>{% for r in job.score_reasons %}<li>{{ r }}</li>{% endfor %}</ul>
-            {% if job.score_gaps %}<h4 style="margin-top:8px">Gaps</h4><ul>{% for g in job.score_gaps %}<li>{{ g }}</li>{% endfor %}</ul>{% endif %}
-          </div>
+
+      <div class="job-main">
+        <h3 class="job-title">{{ job.title }}</h3>
+        <div class="job-company">
+          <strong>{{ job.company }}</strong><span class="sep">·</span>{{ job.location }}<span class="sep">·</span>
+          <span class="mono dim">{% if job.date_posted and job.date_posted != 'nan' %}{{ job.date_posted }}{% else %}{{ job.date_found[:10] }}{% endif %}</span>
+        </div>
+        <div class="job-badges">
+          {% if job.search_pass == 'ottawa' %}
+            <span class="badge badge-info badge-dot">Ottawa</span>
+          {% elif job.search_pass == 'us_remote' %}
+            <span class="badge badge-warn badge-dot">US Remote</span>
+          {% else %}
+            <span class="badge badge-dot">Canada</span>
           {% endif %}
-          <div class="jdesc">{{ (job.description or 'No description available')[:3000] }}</div>
+          {% if job.is_remote %}<span class="badge badge-success">Remote</span>{% endif %}
+          <span class="badge">{{ job.source }}</span>
+          {% if job.status and job.status != 'new' %}<span class="badge badge-info">{{ job.status|capitalize }}</span>{% endif %}
         </div>
-        <div class="jactions">
-          <a href="{{ job.job_url }}" target="_blank" class="btn-view">View posting</a>
-          <button class="btn-tailor" id="tailor-btn-{{ job.id }}" onclick="startTailor('{{ job.id }}', '{{ job.title|replace("'", "\\'") }}', '{{ job.company|replace("'", "\\'") }}')">Tailor resume</button>
-          <form action="/status/{{ job.id }}" method="post" class="status-form" onsubmit="handleStatusChange(event, '{{ job.id }}')">
-            <select name="status" id="status-{{ job.id }}">
-              {% for s in ['new','reviewing','applied','interviewing','rejected','offer'] %}
-              <option value="{{ s }}" {% if job.status == s %}selected{% endif %}>{{ s }}</option>
-              {% endfor %}
-            </select>
-            <input type="hidden" name="resume_path" id="resume-path-{{ job.id }}" value="{{ job.resume_path or '' }}">
-            <button type="submit">Update</button>
-          </form>
-        </div>
-        <div class="tailor-result" id="tailor-result-{{ job.id }}" style="display:none"></div>
-        <div id="followup-{{ job.id }}"></div>
       </div>
     </div>
-    {% endfor %}
-  {% else %}
-    <div class="empty">No jobs found. Try lowering min score or unchecking Fresh only.</div>
-  {% endif %}
-</div>
 
-<!-- INTAKE MODAL -->
-<div class="modal-overlay" id="intake-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 id="modal-title">Tailoring resume...</h2>
-      <p id="modal-subtitle">Analysing job and your background</p>
+    <div class="job-actions">
+      <button class="btn btn-sm" type="button" onclick="toggleDetails('{{ job.id }}', this)">Show details</button>
+      <a class="btn btn-sm" href="{{ job.job_url }}" target="_blank" rel="noopener">View posting ↗</a>
+      <button class="btn btn-sm btn-primary" type="button" id="tailor-btn-{{ job.id }}"
+              onclick='startTailor("{{ job.id }}", {{ job.title|tojson }}, {{ job.company|tojson }})'>Tailor resume</button>
+
+      <form class="status-form" action="/status/{{ job.id }}" method="post" onsubmit="handleStatusChange(event, '{{ job.id }}')">
+        <select class="select" id="status-{{ job.id }}" name="status" onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit()">
+          {% for s in ['new','reviewing','applied','interviewing','rejected','offer'] %}
+          <option value="{{ s }}" {% if job.status == s %}selected{% endif %}>{{ s|capitalize }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" id="resume-path-{{ job.id }}" name="resume_path" value="{{ job.resume_path or '' }}">
+        <noscript><button class="btn btn-sm" type="submit">Save</button></noscript>
+      </form>
     </div>
-    <div class="modal-body" id="modal-body">
-      <div class="loading-intake">
-        <div class="spinner"></div>
-        <div>Analysing the JD and your background...<br><small>About 15 seconds</small></div>
+
+    <div class="details" id="details-{{ job.id }}">
+      <div class="detail-cols">
+        {% if job.score_reasons %}
+        <div class="reasons">
+          <div class="eyebrow">Why it matched</div>
+          <ul>{% for r in job.score_reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+        {% if job.score_gaps %}
+        <div class="reasons gaps">
+          <div class="eyebrow">Gaps</div>
+          <ul>{% for g in job.score_gaps %}<li>{{ g }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
       </div>
+      <div class="jd">{{ job.description|truncate(3000) }}</div>
     </div>
-    <div class="modal-footer" id="modal-footer" style="display:none">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-generate" id="btn-generate" onclick="generateResume()">Generate Resume</button>
+
+    <div class="result-box" id="tailor-result-{{ job.id }}"></div>
+    <div class="followup" id="followup-{{ job.id }}"></div>
+  </article>
+  {% endfor %}
+
+  {% if not jobs %}
+  <div class="empty">
+    <div class="empty-mark">◎</div>
+    <h3 class="h2">No jobs found</h3>
+    <p class="muted" style="margin:6px 0 0">Try lowering min score or unchecking Fresh only.</p>
+    <a class="btn" style="margin-top:16px" href="/">Reset filters</a>
+  </div>
+  {% endif %}
+</main>
+
+<!-- INTAKE / TAILOR MODAL -->
+<div class="overlay" id="intake-modal" onclick="if(event.target===this) closeModal()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="intake-title">
+    <div class="modal-head">
+      <div>
+        <div class="eyebrow">Resume tailoring</div>
+        <h3 class="h1" style="font-size:19px;margin-top:3px" id="intake-title">Intake</h3>
+        <p class="muted" id="intake-subtitle" style="margin:4px 0 0"></p>
+      </div>
+      <button class="icon-btn" type="button" onclick="closeModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="intake-body"></div>
+    <div class="modal-foot" id="intake-foot" style="display:none">
+      <button class="btn" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" type="button" id="btn-generate" onclick="generateResume()">Generate Resume</button>
     </div>
   </div>
 </div>
-
-<script>
-var currentJobId = null;
-var intakeData = null;
-
-function handleStatusChange(event, jobId) {
-  event.preventDefault();
-  var select = document.getElementById('status-' + jobId);
-  var status = select ? select.value : 'new';
-  var resumePath = document.getElementById('resume-path-' + jobId);
-  var formData = new FormData();
-  formData.append('status', status);
-  if (resumePath) formData.append('resume_path', resumePath.value);
-
-  fetch('/status/' + jobId, {
-    method: 'POST',
-    body: formData
-  }).then(function(r) {
-    var btn = document.querySelector('#card-' + jobId + ' .status-form button');
-    if (btn) { btn.textContent = 'Saved'; setTimeout(function(){ btn.textContent = 'Update'; }, 1500); }
-    var card = document.getElementById('card-' + jobId);
-    if (status === 'applied') {
-      if (card) card.classList.add('applied-card');
-      checkFollowUp(jobId);
-    }
-  }).catch(function(e) {
-    console.log('Status update failed:', e);
-  });
-}
-
-function checkFollowUp(jobId) {
-  fetch('/api/jobs/' + jobId + '/follow-up')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var panel = document.getElementById('followup-' + jobId);
-      if (!panel) return;
-      var items = data.follow_ups || [];
-      if (items.length === 0) return;
-
-      var html = '<div class="followup-panel">';
-      html += '<div class="followup-header">';
-      html += '<strong>Follow up opportunities at ' + data.company + '</strong>';
-      html += '<span>' + items.length + ' fresh role' + (items.length > 1 ? 's' : '') + ' found</span>';
-      html += '</div>';
-
-      items.forEach(function(job) {
-        var scoreClass = job.score >= 85 ? 's85' : job.score >= 70 ? 's70' : 's50';
-        html += '<div class="followup-item" id="fu-item-' + job.id + '">';
-        html += '<div class="followup-info">';
-        html += '<div class="followup-title">' + job.title + '</div>';
-        html += '<div class="followup-meta">' + job.location + ' &nbsp;·&nbsp; ' + job.date_found.split(' ')[0] + '</div>';
-        html += '</div>';
-        html += '<div class="followup-actions">';
-        html += '<span class="score-badge ' + scoreClass + '" style="font-size:12px;padding:3px 8px">' + job.score + '/100</span>';
-        html += '<a href="' + job.job_url + '" target="_blank" class="btn-view" style="font-size:12px;padding:5px 10px">View</a>';
-        if (data.source_resume) {
-          html += '<button class="btn-reuse" onclick="reuseResume(\'' + jobId + '\', \'' + job.id + '\', this)">Reuse resume</button>';
-        }
-        html += '</div>';
-        html += '</div>';
-      });
-
-      html += '</div>';
-      panel.innerHTML = html;
-    })
-    .catch(function(e) { console.log('Follow-up check failed:', e); });
-}
-
-function reuseResume(sourceJobId, targetJobId, btn) {
-  btn.disabled = true;
-  btn.textContent = 'Generating...';
-  fetch('/api/jobs/' + targetJobId + '/reuse-resume', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ source_job_id: sourceJobId })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error) {
-      btn.textContent = 'Error';
-      console.log(data.error);
-    } else {
-      btn.textContent = 'Done';
-      btn.style.background = '#155a27';
-      var item = document.getElementById('fu-item-' + targetJobId);
-      if (item) {
-        var note = document.createElement('div');
-        note.className = 'reuse-result';
-        note.textContent = 'Saved as ' + data.filename + ' (location: ' + data.location_used + ')';
-        item.appendChild(note);
-      }
-    }
-  })
-  .catch(function(e) {
-    btn.textContent = 'Failed';
-    btn.disabled = false;
-  });
-}
-
-function startTailor(jobId, title, company) {
-  currentJobId = jobId;
-  intakeData = null;
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-subtitle').textContent = company + ' — Analysing JD and your background...';
-  document.getElementById('modal-body').innerHTML = '<div class="loading-intake"><div class="spinner"></div><div>Analysing the job and your background...<br><small>About 15 seconds</small></div></div>';
-  document.getElementById('modal-footer').style.display = 'none';
-  document.getElementById('intake-modal').classList.add('open');
-
-  fetch('/api/jobs/' + jobId + '/intake', { method: 'POST' })
-    .then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
-    .then(function(data) {
-      console.log('Intake response:', data);
-      if (data.error) {
-        document.getElementById('modal-body').innerHTML = '<div style="padding:24px;color:#c0392b">Error: ' + data.error + '</div>';
-        document.getElementById('modal-footer').style.display = 'none';
-        return;
-      }
-      intakeData = data;
-      renderIntake(data);
-    })
-    .catch(function(e) {
-      console.error('Intake fetch error:', e);
-      document.getElementById('modal-body').innerHTML = '<div style="padding:24px;color:#c0392b">Failed: ' + e.message + '. Check terminal for errors.</div>';
-      document.getElementById('modal-footer').style.display = 'none';
-    });
-}
-
-function renderIntake(data) {
-  document.getElementById('modal-subtitle').textContent = data.company + ' — Answer these quick questions';
-  var html = '';
-  if (data.industry_context) {
-    html += '<div class="intake-context"><strong>What this role needs:</strong> ' + data.industry_context + '</div>';
-  }
-  var questions = data.questions || [];
-  if (questions.length === 0) {
-    html += '<p style="color:#666;font-size:14px">No additional questions needed. Click Generate Resume to proceed.</p>';
-  } else {
-    questions.forEach(function(q) {
-      html += '<div class="intake-question" id="iq-' + q.id + '">';
-      html += '<div class="q-header"><span class="q-role">' + q.role + '</span><span class="q-text">' + q.question + '</span></div>';
-      html += '<div class="q-why">Unlocks: ' + q.why + '</div>';
-      if (q.type === 'yesno') {
-        html += '<div class="q-yesno">';
-        html += '<button onclick="selectYesNo(\'' + q.id + '\', true)" id="yes-' + q.id + '">Yes</button>';
-        html += '<button onclick="selectYesNo(\'' + q.id + '\', false)" id="no-' + q.id + '">No</button>';
-        html += '</div>';
-        html += '<div class="q-detail" id="detail-' + q.id + '"><label>Tell me more — one sentence is enough:</label>';
-        html += '<textarea id="ans-' + q.id + '" placeholder="e.g. Weekly report showing..."></textarea></div>';
-      } else {
-        html += '<div class="q-sentence"><textarea id="ans-' + q.id + '" placeholder="One sentence is enough..."></textarea></div>';
-      }
-      html += '</div>';
-    });
-  }
-  document.getElementById('modal-body').innerHTML = html;
-  document.getElementById('modal-footer').style.display = 'flex';
-}
-
-function selectYesNo(qid, isYes) {
-  document.getElementById('yes-' + qid).className = isYes ? 'selected-yes' : '';
-  document.getElementById('no-' + qid).className = isYes ? '' : 'selected-no';
-  document.getElementById('detail-' + qid).classList.toggle('open', isYes);
-}
-
-function collectAnswers() {
-  var answers = {};
-  var questions = (intakeData && intakeData.questions) || [];
-  questions.forEach(function(q) {
-    if (q.type === 'yesno') {
-      var yesBtn = document.getElementById('yes-' + q.id);
-      if (yesBtn && yesBtn.className === 'selected-yes') {
-        var detail = document.getElementById('ans-' + q.id);
-        answers[q.id] = { question: q.question, role: q.role, answer: 'Yes. ' + (detail ? detail.value : '') };
-      }
-    } else {
-      var ans = document.getElementById('ans-' + q.id);
-      if (ans && ans.value.trim()) {
-        answers[q.id] = { question: q.question, role: q.role, answer: ans.value.trim() };
-      }
-    }
-  });
-  return answers;
-}
-
-function generateResume() {
-  var btn = document.getElementById('btn-generate');
-  btn.disabled = true;
-  btn.textContent = 'Generating...';
-  document.getElementById('modal-body').innerHTML = '<div class="loading-intake"><div class="spinner"></div><div>Tailoring your resume...<br><small>About 30 seconds</small></div></div>';
-  document.getElementById('modal-footer').style.display = 'none';
-
-  fetch('/api/jobs/' + currentJobId + '/tailor', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ intake_answers: collectAnswers() })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error) {
-      document.getElementById('modal-body').innerHTML = '<div style="padding:24px;color:#c0392b">Error: ' + data.error + '</div>';
-      document.getElementById('modal-footer').style.display = 'flex';
-      btn.disabled = false; btn.textContent = 'Generate Resume';
-      return;
-    }
-    var docx = data.docx || {};
-    var filename = docx.filename || 'resume';
-    var gates = data.gate_scores || {};
-    var html = '<div style="margin-bottom:16px"><strong style="font-size:15px;color:#1e7e34">Resume saved: ' + filename + '</strong><br><small style="color:#666">Check your output folder</small></div>';
-    if (data.jd_narrative) html += '<div style="font-size:13px;color:#444;margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:6px"><strong>JD Narrative:</strong> ' + data.jd_narrative + '</div>';
-    if (Object.keys(gates).length) {
-      html += '<div class="gate-scores">';
-      ['ats','recruiter','hiring_manager'].forEach(function(g) {
-        html += '<div class="gate-score"><div class="gs-label">' + g.replace('_',' ').toUpperCase() + '</div><div class="gs-value">' + (gates[g] || '-') + '</div></div>';
-      });
-      html += '</div>';
-    }
-    if (data.gaps && data.gaps.length) html += '<div style="margin-top:12px;font-size:12px;color:#856404;padding:10px;background:#fff3cd;border-radius:6px"><strong>Gaps:</strong> ' + data.gaps.join(' · ') + '</div>';
-    document.getElementById('modal-body').innerHTML = html;
-    document.getElementById('modal-footer').innerHTML = '<button class="btn-cancel" onclick="closeModal()">Close</button>';
-    document.getElementById('modal-footer').style.display = 'flex';
-    var rd = document.getElementById('tailor-result-' + currentJobId);
-    if (rd) { rd.style.display = 'block'; rd.textContent = 'Resume saved as ' + filename; }
-    var rpInput = document.getElementById('resume-path-' + currentJobId);
-    if (rpInput && docx.path) rpInput.value = docx.path;
-  })
-  .catch(function(e) {
-    document.getElementById('modal-body').innerHTML = '<div style="padding:24px;color:#c0392b">Tailoring failed. Please try again.</div>';
-    document.getElementById('modal-footer').style.display = 'flex';
-    btn.disabled = false; btn.textContent = 'Generate Resume';
-  });
-}
-
-function closeModal() {
-  document.getElementById('intake-modal').classList.remove('open');
-  currentJobId = null; intakeData = null;
-}
-
-document.getElementById('intake-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-</script>
 
 <!-- ADD JOB MODAL -->
-<div class="modal-overlay" id="add-job-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Add Job Manually</h2>
-      <p>Paste a job you found outside the scraper — referral, company website, LinkedIn</p>
+<div class="overlay" id="add-job-modal" onclick="if(event.target===this) closeAddJob()">
+  <div class="modal" style="max-width:560px" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <div class="eyebrow">Manual entry</div>
+        <h3 class="h1" style="font-size:19px;margin-top:3px">Add a job</h3>
+      </div>
+      <button class="icon-btn" type="button" onclick="closeAddJob()" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">JOB TITLE *</label>
-        <input type="text" id="add-title" placeholder="e.g. Senior BI Performance Analyst" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit">
+      <div style="display:grid;gap:14px">
+        <div class="field"><label class="label" for="add-title">Title *</label><input class="input" id="add-title" placeholder="Senior AI Engineer"></div>
+        <div class="field"><label class="label" for="add-company">Company *</label><input class="input" id="add-company" placeholder="Acme Corp"></div>
+        <div class="field"><label class="label" for="add-location">Location</label><input class="input" id="add-location" placeholder="Ottawa, ON"></div>
+        <div class="field"><label class="label" for="add-url">Job URL</label><input class="input" id="add-url" placeholder="https://…"></div>
+        <div class="field"><label class="label" for="add-description">Description *</label><textarea class="textarea" id="add-description" style="min-height:150px" placeholder="Paste the full job description…"></textarea></div>
+        <div id="add-job-result"></div>
       </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">COMPANY *</label>
-        <input type="text" id="add-company" placeholder="e.g. Metrolinx" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit">
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">LOCATION</label>
-        <input type="text" id="add-location" placeholder="e.g. Toronto, ON" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit">
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">JOB URL</label>
-        <input type="text" id="add-url" placeholder="https://..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit">
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">JOB DESCRIPTION * (paste full JD)</label>
-        <textarea id="add-description" placeholder="Paste the full job description here..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;min-height:160px"></textarea>
-      </div>
-      <div id="add-job-result" style="display:none;padding:10px;border-radius:6px;font-size:13px;margin-top:8px"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="document.getElementById('add-job-modal').classList.remove('open')">Cancel</button>
-      <button class="btn-generate" onclick="submitAddJob()">Add & Score Job</button>
+    <div class="modal-foot">
+      <button class="btn" type="button" onclick="closeAddJob()">Cancel</button>
+      <button class="btn btn-primary" type="button" onclick="submitAddJob()">Add job</button>
     </div>
   </div>
 </div>
 
 <script>
-function submitAddJob() {
-  var title = document.getElementById('add-title').value.trim();
-  var company = document.getElementById('add-company').value.trim();
-  var description = document.getElementById('add-description').value.trim();
-  var location = document.getElementById('add-location').value.trim();
-  var url = document.getElementById('add-url').value.trim();
-  var result = document.getElementById('add-job-result');
+/* ---------- theme ---------- */
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
+  var g=document.getElementById('theme-glyph'); if(g) g.textContent = t==='dark' ? '◑' : '◐';}
+function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  try{localStorage.setItem('ja-theme',t);}catch(e){} applyTheme(t);}
+try{applyTheme(localStorage.getItem('ja-theme')||'light');}catch(e){}
 
-  if (!title || !company || !description) {
-    result.style.display = 'block';
-    result.style.background = '#fde8e8';
-    result.style.color = '#c0392b';
-    result.textContent = 'Title, company and description are required.';
-    return;
-  }
+/* ---------- details ---------- */
+function toggleDetails(jobId, btn){
+  var el=document.getElementById('details-'+jobId);
+  var open=el.classList.toggle('open');
+  btn.textContent = open ? 'Hide details' : 'Show details';
+}
 
-  result.style.display = 'block';
-  result.style.background = '#e8f0f7';
-  result.style.color = '#1F4E79';
-  result.textContent = 'Adding and scoring job...';
-
-  fetch('/api/jobs/add', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({title: title, company: company, location: location, description: description, job_url: url})
+/* ---------- add job ---------- */
+function openAddJob(){document.getElementById('add-job-modal').classList.add('open');}
+function closeAddJob(){document.getElementById('add-job-modal').classList.remove('open');}
+function submitAddJob(){
+  var title=document.getElementById('add-title').value.trim();
+  var company=document.getElementById('add-company').value.trim();
+  var description=document.getElementById('add-description').value.trim();
+  var out=document.getElementById('add-job-result');
+  if(!title||!company||!description){out.innerHTML='<div class="notice notice-err">Title, company and description are required.</div>';return;}
+  out.innerHTML='<div class="notice"><span class="spinner"></span> Adding job…</div>';
+  fetch('/api/jobs/add',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({title:title,company:company,location:document.getElementById('add-location').value.trim(),
+      description:description,job_url:document.getElementById('add-url').value.trim()})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.error){out.innerHTML='<div class="notice notice-err">'+d.error+'</div>';return;}
+    out.innerHTML='<div class="notice notice-ok">Job added. Reloading…</div>';
+    setTimeout(function(){location.reload();},700);
   })
-  .then(function(r){ return r.json(); })
-  .then(function(data){
-    if (data.success) {
-      result.style.background = '#e8f5e9';
-      result.style.color = '#1e7e34';
-      result.textContent = 'Job added! Score: ' + data.score + '/100. Refresh the dashboard to see it.';
-      setTimeout(function(){
-        document.getElementById('add-job-modal').classList.remove('open');
-        window.location.reload();
-      }, 2000);
+  .catch(function(e){out.innerHTML='<div class="notice notice-err">'+e+'</div>';});
+}
+
+/* ---------- status ---------- */
+function handleStatusChange(event, jobId){
+  event.preventDefault();
+  var form=event.target;
+  var status=document.getElementById('status-'+jobId).value;
+  fetch('/status/'+jobId,{method:'POST',body:new FormData(form)})
+    .then(function(){
+      var card=document.getElementById('card-'+jobId);
+      if(card) card.classList.toggle('applied-card', status==='applied');
+      if(status==='applied') checkFollowUp(jobId);
+    });
+}
+
+/* ---------- follow-ups ---------- */
+function checkFollowUp(jobId){
+  var box=document.getElementById('followup-'+jobId);
+  if(!box) return;
+  box.innerHTML='<div class="fu-panel"><span class="spinner"></span> Checking for other roles at this company…</div>';
+  fetch('/api/jobs/'+jobId+'/follow-up')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d || !d.follow_ups || !d.follow_ups.length){box.innerHTML='';return;}
+      var h='<div class="fu-panel"><div class="eyebrow">Follow up opportunities at '+(d.company||'this company')+'</div>';
+      d.follow_ups.forEach(function(j){
+        var cls = j.score>=85?'score-high':(j.score>=70?'score-mid':'score-low');
+        h+='<div class="fu-row">'+
+             '<span class="badge '+(j.score>=85?'badge-success':(j.score>=70?'badge-warn':''))+' mono">'+(j.score||'—')+'</span>'+
+             '<span class="t">'+j.title+'</span>'+
+             '<a class="btn btn-sm" target="_blank" rel="noopener" href="'+(j.job_url||'#')+'">View</a>'+
+             (d.source_resume ? '<button class="btn btn-sm btn-primary" type="button" onclick="reuseResume(\''+jobId+'\',\''+j.id+'\',this)">Reuse resume</button>' : '')+
+           '</div>';
+      });
+      box.innerHTML=h+'</div>';
+    })
+    .catch(function(){box.innerHTML='';});
+}
+
+function reuseResume(sourceJobId, targetJobId, btn){
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Copying…';
+  fetch('/api/jobs/'+targetJobId+'/reuse-resume',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({source_job_id:sourceJobId})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    btn.innerHTML = d && d.error ? 'Failed' : 'Reused ✓';
+    if(d && d.resume_path){
+      var inp=document.getElementById('resume-path-'+targetJobId);
+      if(inp) inp.value=d.resume_path;
+    }
+  })
+  .catch(function(){btn.innerHTML='Failed';});
+}
+
+/* ---------- tailor / intake ---------- */
+var currentJobId=null, currentQuestions=[];
+function closeModal(){document.getElementById('intake-modal').classList.remove('open');}
+
+function startTailor(jobId, title, company){
+  currentJobId=jobId; currentQuestions=[];
+  document.getElementById('intake-title').textContent=title;
+  document.getElementById('intake-subtitle').textContent=company;
+  document.getElementById('intake-foot').style.display='none';
+  document.getElementById('intake-body').innerHTML=
+    '<div class="loading-state"><span class="spinner"></span><p>Preparing intake questions</p><small>About 15 seconds</small></div>';
+  document.getElementById('intake-modal').classList.add('open');
+  fetch('/api/jobs/'+jobId+'/intake',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error){document.getElementById('intake-body').innerHTML='<div class="notice notice-err">'+d.error+'</div>';return;}
+      renderIntake(d);
+    })
+    .catch(function(e){document.getElementById('intake-body').innerHTML='<div class="notice notice-err">'+e+'</div>';});
+}
+
+function renderIntake(data){
+  currentQuestions = data.questions || [];
+  var h='';
+  if(data.industry_context){
+    h+='<div class="notice" style="background:var(--info-bg);border-color:var(--info-bd);color:var(--info-fg);margin-bottom:16px">'+
+       '<strong>Industry context</strong><br>'+data.industry_context+'</div>';
+  }
+  currentQuestions.forEach(function(q){
+    h+='<div class="q" id="iq-'+q.id+'"><div class="q-text">'+q.question+'</div>';
+    if(q.type==='yes_no' || q.yes_no){
+      h+='<div class="yn">'+
+         '<button class="btn btn-sm" type="button" data-yn="yes" onclick="selectYesNo(\''+q.id+'\',true)">Yes</button>'+
+         '<button class="btn btn-sm" type="button" data-yn="no" onclick="selectYesNo(\''+q.id+'\',false)">No</button></div>'+
+         '<textarea class="textarea" id="ans-'+q.id+'" style="display:none;margin-top:10px" placeholder="Add detail…"></textarea>';
     } else {
-      result.style.background = '#fde8e8';
-      result.style.color = '#c0392b';
-      result.textContent = data.error || 'Failed to add job.';
+      h+='<textarea class="textarea" id="ans-'+q.id+'" placeholder="Your answer…"></textarea>';
+    }
+    h+='</div>';
+  });
+  if(!currentQuestions.length) h+='<p class="muted">No intake questions — you can generate the resume directly.</p>';
+  document.getElementById('intake-body').innerHTML=h;
+  document.getElementById('intake-foot').style.display='flex';
+}
+
+function selectYesNo(qid, isYes){
+  var wrap=document.getElementById('iq-'+qid);
+  if(!wrap) return;
+  wrap.querySelectorAll('[data-yn]').forEach(function(b){
+    b.classList.toggle('sel', (b.getAttribute('data-yn')==='yes')===isYes);
+  });
+  wrap.setAttribute('data-answer', isYes?'yes':'no');
+  var ta=document.getElementById('ans-'+qid);
+  if(ta) ta.style.display = isYes ? 'block' : 'none';
+}
+
+function collectAnswers(){
+  var out={};
+  currentQuestions.forEach(function(q){
+    var wrap=document.getElementById('iq-'+q.id);
+    var ta=document.getElementById('ans-'+q.id);
+    var yn=wrap ? wrap.getAttribute('data-answer') : null;
+    var text=ta ? ta.value.trim() : '';
+    if(yn) out[q.id]= text ? yn+': '+text : yn;
+    else if(text) out[q.id]=text;
+  });
+  return out;
+}
+
+function generateResume(){
+  var jobId=currentJobId;
+  var btn=document.getElementById('btn-generate');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Generating…';
+  document.getElementById('intake-body').innerHTML=
+    '<div class="loading-state"><span class="spinner"></span><p>Tailoring your resume</p><small>About 15 seconds</small></div>';
+  fetch('/api/jobs/'+jobId+'/tailor',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({intake_answers:collectAnswers()})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    btn.disabled=false; btn.textContent='Generate Resume';
+    if(d.error){document.getElementById('intake-body').innerHTML='<div class="notice notice-err">'+d.error+'</div>';return;}
+    var h='<div class="notice notice-ok">Saved as <strong>'+(d.filename||d.resume_path||'resume')+'</strong></div>';
+    if(d.jd_narrative) h+='<div style="margin-top:16px"><div class="eyebrow">JD narrative</div><p class="muted">'+d.jd_narrative+'</p></div>';
+    if(d.gate_scores){
+      h+='<div style="margin-top:16px"><div class="eyebrow">Gate scores</div><div class="gate-grid">'+
+         '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
+         '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
+         '<div class="gate"><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div><div class="l">Hiring manager</div></div>'+
+         '</div></div>';
+    }
+    if(d.gaps && d.gaps.length){
+      h+='<div class="reasons gaps" style="margin-top:16px"><div class="eyebrow">Gaps</div><ul>';
+      d.gaps.forEach(function(g){h+='<li>'+g+'</li>';}); h+='</ul></div>';
+    }
+    document.getElementById('intake-body').innerHTML=h;
+
+    var inp=document.getElementById('resume-path-'+jobId);
+    if(inp && (d.resume_path||d.filename)) inp.value=d.resume_path||d.filename;
+    var res=document.getElementById('tailor-result-'+jobId);
+    if(res){
+      res.classList.add('show');
+      res.innerHTML='<div class="eyebrow">Tailored resume</div><div style="margin-top:4px"><strong>'+(d.filename||d.resume_path)+'</strong></div>'+
+        (d.gate_scores ? '<div class="gate-grid">'+
+          '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
+          '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
+          '<div class="gate"><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div><div class="l">Hiring mgr</div></div>'+
+        '</div>' : '');
     }
   })
   .catch(function(e){
-    result.style.background = '#fde8e8';
-    result.style.color = '#c0392b';
-    result.textContent = 'Request failed. Try again.';
+    btn.disabled=false; btn.textContent='Generate Resume';
+    document.getElementById('intake-body').innerHTML='<div class="notice notice-err">'+e+'</div>';
   });
 }
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){closeModal();closeAddJob();}
+});
 </script>
 </body>
 </html>

@@ -2,3 +2,6 @@ flask
 psycopg2-binary
 anthropic
 python-dotenv
+requests
+pypdf
+docx2txt

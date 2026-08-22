@@ -2,16 +2,23 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 from datetime import datetime
 from anthropic import Anthropic
 from ai_logger import call_claude_with_logging
 from dotenv import load_dotenv
 from db import get_db
+from profile_store import get_profile as get_stored_profile
 
 load_dotenv()
 
-RESUME_PATH = "master_resume.json"
-OUTPUT_DIR = "output"
+# Vercel's serverless filesystem is read-only outside /tmp, and even /tmp
+# doesn't persist across invocations — so this is scratch space only for
+# build_docx.js to write to before build_tailored_docx() uploads the result
+# to Blob storage and deletes the local copy. Never treat OUTPUT_DIR itself
+# as durable storage.
+OUTPUT_DIR = os.path.join(tempfile.gettempdir(), "job_apply_output")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 client = Anthropic()
 
@@ -46,8 +53,15 @@ QUALITY RULES — apply to every bullet you write or rewrite:
 """
 
 def load_resume():
-    with open(RESUME_PATH) as f:
-        return json.load(f)
+    """Same return shape as before (the master_resume.json document itself) —
+    only the source changed, to profile.resume_json."""
+    stored = get_stored_profile()
+    if not stored or not stored.get("resume_json"):
+        raise RuntimeError(
+            "No resume on file yet — visit /settings to upload and confirm "
+            "a resume before tailoring can run."
+        )
+    return stored["resume_json"]
 
 def get_job(job_id):
     conn = get_db()
@@ -443,16 +457,22 @@ def build_tailored_docx(review_data):
                 role["bullets"].insert(0, {"id": f"new_{role['company'][:3]}", "text": new_text})
 
     date_str = datetime.now().strftime("%Y-%m-%d")
+    safe_name = re.sub(r'[^a-zA-Z0-9]', '_', resume.get("name", "Resume"))
     safe_company = re.sub(r'[^a-zA-Z0-9]', '_', company)
     safe_title = re.sub(r'[^a-zA-Z0-9]', '_', job_title)[:30]
-    filename = f"Olu_Sobayo_{safe_company}_{safe_title}_{date_str}.docx"
+    filename = f"{safe_name}_{safe_company}_{safe_title}_{date_str}.docx"
     output_path = os.path.join(OUTPUT_DIR, filename)
 
     temp_path = os.path.join(OUTPUT_DIR, "temp_tailored.json")
     with open(temp_path, "w") as f:
         json.dump(tailored_resume, f, indent=2)
 
-    F = FORMAT_SPEC
+    # Per-profile accent color (Settings -> Preferences), falling back to
+    # the original navy if nothing has been configured yet.
+    F = dict(FORMAT_SPEC)
+    stored = get_stored_profile()
+    if stored and stored.get("brand_color"):
+        F["blue"] = stored["brand_color"].lstrip("#")
 
 
     # Detect transferable tools from JD and add to tech stack
@@ -503,10 +523,32 @@ def build_tailored_docx(review_data):
     except Exception:
         pass
 
-    if "SUCCESS" in result.stdout:
-        return {"success": True, "path": output_path, "filename": filename}
-    else:
+    if "SUCCESS" not in result.stdout:
         return {"error": result.stderr or result.stdout or "Failed to generate docx"}
+
+    # output_path is local /tmp scratch space only (see OUTPUT_DIR comment
+    # above) — upload to Blob storage so the file survives past this request
+    # and is actually downloadable, then discard the local copy.
+    try:
+        from storage import upload as blob_upload
+        with open(output_path, "rb") as f:
+            blob_url = blob_upload(
+                f"tailored/{filename}", f.read(),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        try:
+            os.remove(output_path)
+        except OSError:
+            pass
+        return {"success": True, "path": blob_url, "filename": filename}
+    except Exception as e:
+        # Blob storage not configured yet, or the upload failed — fall back
+        # to the local /tmp path rather than losing the generated docx
+        # outright. This path will not survive past the current invocation
+        # on Vercel, so treat this branch as a signal to set up
+        # BLOB_READ_WRITE_TOKEN, not as a working download link in prod.
+        print(f"tailor: Blob upload failed, returning local path instead: {e}")
+        return {"success": True, "path": output_path, "filename": filename}
 
 
 if __name__ == "__main__":
