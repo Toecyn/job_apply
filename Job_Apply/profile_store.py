@@ -9,6 +9,7 @@ through get_profile()/save_profile() instead of the hardcoded PROFILE_ID —
 everything else in this module stays the same shape.
 """
 import json
+import re
 from datetime import datetime
 from db import get_db
 
@@ -101,6 +102,29 @@ def save_profile(fields):
     )
     conn.commit()
     conn.close()
+
+
+def market_pass_name(market):
+    """Derive a stable, human-readable search_pass slug from a user-defined
+    market row ({"location": ..., "mode": ..., "country": ...}) — replaces
+    the old fixed set of pass names (canada_remote, ottawa, us_remote, ...).
+
+    Lives here (not scraper.py, its original home) so app.py can use the
+    exact same slugging for dashboard stats/filtering without importing
+    scraper.py — which pulls in jobspy at module level, and jobspy is
+    deliberately excluded from requirements.txt (see db.init_db()'s
+    docstring for the same reasoning). scraper.py imports this from here."""
+    loc_slug = re.sub(r'[^a-z0-9]+', '_', (market.get("location") or "").lower()).strip('_') or "anywhere"
+    mode_slug = (market.get("mode") or "").lower().replace(" ", "_").replace("-", "_")
+    return f"{loc_slug}_{mode_slug}" if mode_slug else loc_slug
+
+
+def market_label(market):
+    """Human-readable label for a market row, e.g. "Lagos · Hybrid" or just
+    "Canada" if no mode is set."""
+    location = market.get("location") or "Anywhere"
+    mode = market.get("mode") or ""
+    return f"{location} · {mode}" if mode else location
 
 
 def is_configured():

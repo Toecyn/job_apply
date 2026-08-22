@@ -304,23 +304,23 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
   <!-- MARKET FILTER CARDS -->
   <div class="section">
     <div class="section-head"><h2 class="h2">Markets</h2><span class="dim" style="font-size:12.5px">Click to filter the list</span></div>
+    {% if stats.markets %}
     <div class="stat-grid">
-      <a class="stat {% if filters.market == 'canada' %}active{% endif %}" href="/?market=canada&min_score={{ filters.min_score }}&fresh={{ filters.fresh }}">
-        <div class="stat-label">Canada</div>
-        <div class="stat-value">{{ stats.canada }}</div>
-        <div class="stat-sub">Nationwide roles</div>
+      {% for m in stats.markets %}
+      <a class="stat {% if filters.market == m.pass_name %}active{% endif %}" href="/?market={{ m.pass_name }}&min_score={{ filters.min_score }}&fresh={{ filters.fresh }}">
+        <div class="stat-label">{{ m.label }}</div>
+        <div class="stat-value">{{ m.count }}</div>
+        <div class="stat-sub">{{ m.count }} job{{ '' if m.count == 1 else 's' }} found</div>
       </a>
-      <a class="stat {% if filters.market == 'ottawa' %}active{% endif %}" href="/?market=ottawa&min_score={{ filters.min_score }}&fresh={{ filters.fresh }}">
-        <div class="stat-label">Ottawa</div>
-        <div class="stat-value">{{ stats.ottawa }}</div>
-        <div class="stat-sub">Local &amp; hybrid</div>
-      </a>
-      <a class="stat {% if filters.market == 'us_remote' %}active{% endif %}" href="/?market=us_remote&min_score={{ filters.min_score }}&fresh={{ filters.fresh }}">
-        <div class="stat-label">US Remote</div>
-        <div class="stat-value">{{ stats.us }}</div>
-        <div class="stat-sub">Remote-friendly US</div>
-      </a>
+      {% endfor %}
     </div>
+    {% else %}
+    <div class="empty">
+      <div class="empty-mark">◎</div>
+      <h3 class="h2">No markets configured</h3>
+      <p class="muted" style="margin:6px 0 0">Add a search market on the <a href="/settings">Settings</a> page to see per-market counts here.</p>
+    </div>
+    {% endif %}
   </div>
 
   <!-- FILTERS -->
@@ -337,12 +337,9 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
       <label class="label" for="f-market">Market</label>
       <select class="select" id="f-market" name="market">
         <option value="all" {% if filters.market == 'all' %}selected{% endif %}>All markets</option>
-        <option value="canada_remote" {% if filters.market == 'canada_remote' %}selected{% endif %}>Canada remote</option>
-        <option value="canada_hybrid" {% if filters.market == 'canada_hybrid' %}selected{% endif %}>Canada hybrid</option>
-        <option value="canada" {% if filters.market == 'canada' %}selected{% endif %}>Canada</option>
-        <option value="ottawa" {% if filters.market == 'ottawa' %}selected{% endif %}>Ottawa</option>
-        <option value="us_remote" {% if filters.market == 'us_remote' %}selected{% endif %}>US remote</option>
-        <option value="contract" {% if filters.market == 'contract' %}selected{% endif %}>Contract</option>
+        {% for m in stats.markets %}
+        <option value="{{ m.pass_name }}" {% if filters.market == m.pass_name %}selected{% endif %}>{{ m.label }}</option>
+        {% endfor %}
       </select>
     </div>
     <div class="field">

@@ -54,6 +54,14 @@ def get_jobs_data(status="all", market="all", min_score=70, fresh_hours=72):
 
 
 def get_stats_data():
+    """Per-market counts (stats["markets"]) are now driven by the profile's
+    configured markets instead of a fixed canada/ottawa/us_remote set —
+    see profile_store.market_pass_name(). A market you've since removed
+    from Settings, or a job scraped under the old hardcoded passes before
+    this migration, simply won't appear in this list; it still counts
+    toward total/scored/etc. and still shows in the "All markets" job list."""
+    from profile_store import get_profile, market_pass_name, market_label
+
     conn = get_db()
     stats = {
         "total": conn.execute("SELECT COUNT(*) FROM jobs WHERE is_stale = 0").fetchone()[0],
@@ -62,13 +70,18 @@ def get_stats_data():
         "applied": conn.execute("SELECT COUNT(*) FROM jobs WHERE status = 'applied'").fetchone()[0],
         "fresh": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= to_char(NOW() - INTERVAL '3 days', 'YYYY-MM-DD HH24:MI:SS') AND is_stale = 0").fetchone()[0],
         "fresh_scored": conn.execute("SELECT COUNT(*) FROM jobs WHERE date_found >= to_char(NOW() - INTERVAL '3 days', 'YYYY-MM-DD HH24:MI:SS') AND score >= 70 AND is_stale = 0").fetchone()[0],
-        "canada": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada' AND is_stale = 0").fetchone()[0],
-        "canada_remote": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada_remote' AND is_stale = 0").fetchone()[0],
-        "canada_hybrid": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'canada_hybrid' AND is_stale = 0").fetchone()[0],
-        "ottawa": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'ottawa' AND is_stale = 0").fetchone()[0],
-        "us": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'us_remote' AND is_stale = 0").fetchone()[0],
-        "contract": conn.execute("SELECT COUNT(*) FROM jobs WHERE search_pass = 'contract' AND is_stale = 0").fetchone()[0],
     }
+
+    profile = get_profile()
+    markets = []
+    for market in (profile or {}).get("markets", []):
+        pass_name = market_pass_name(market)
+        count = conn.execute(
+            "SELECT COUNT(*) FROM jobs WHERE search_pass = %s AND is_stale = 0", (pass_name,)
+        ).fetchone()[0]
+        markets.append({"pass_name": pass_name, "label": market_label(market), "count": count})
+    stats["markets"] = markets
+
     conn.close()
     return stats
 

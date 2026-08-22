@@ -1,11 +1,10 @@
 import json
 import hashlib
-import re
 from datetime import datetime
 from jobspy import scrape_jobs
 from dotenv import load_dotenv
 from db import get_db, init_db
-from profile_store import get_profile as get_stored_profile
+from profile_store import get_profile as get_stored_profile, market_pass_name
 load_dotenv()
 
 # Results requested per market, by work mode — same figures the old
@@ -26,21 +25,6 @@ def load_config():
         "exclude_keywords": stored["exclude_keywords"],
     }
 
-
-def market_pass_name(market):
-    """Derive a stable, human-readable search_pass slug from a user-defined
-    market row ({"location": ..., "mode": ..., "country": ...}) — replaces
-    the old fixed set of pass names (canada_remote, ottawa, us_remote, ...).
-
-    Note: app.py's stats cards and index.html's market filter dropdown still
-    reference the original fixed slugs (canada / ottawa / us_remote / ...)
-    directly — a market whose slug doesn't happen to match one of those
-    won't show up in that dashboard filtering yet. Jobs are still saved and
-    scored normally either way; making the dashboard side fully dynamic too
-    is a follow-up beyond this backend change."""
-    loc_slug = re.sub(r'[^a-z0-9]+', '_', (market.get("location") or "").lower()).strip('_') or "anywhere"
-    mode_slug = (market.get("mode") or "").lower().replace(" ", "_").replace("-", "_")
-    return f"{loc_slug}_{mode_slug}" if mode_slug else loc_slug
 
 def fingerprint(title, company, location):
     raw = f"{title.lower().strip()}{company.lower().strip()}{location.lower().strip()}"
