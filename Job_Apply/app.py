@@ -352,7 +352,7 @@ Return only the refined answer, no preamble."""
             client=client,
             call_type="skills_refine",
             job_id=skill_id,
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-5",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=300
         )
@@ -431,7 +431,7 @@ Candidate answer: {answer}
 Score 0-100 where 80+ is strong hire signal.
 Return ONLY JSON: {{"score": <int>, "verdict": "<one sentence>", "strong": "<what was strong>", "improve": "<what was missing>", "model_answer": "<3-4 sentence model answer>"}}"""
         response = call_claude_with_logging(client=client, call_type="simulate_feedback",
-            job_id=company_id, model="claude-sonnet-4-20250514",
+            job_id=company_id, model="claude-sonnet-5",
             messages=[{"role": "user", "content": prompt}], max_tokens=600)
         text = response.content[0].text.strip().replace("```json","").replace("```","").strip()
         return jsonify(json.loads(text))

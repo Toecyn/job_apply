@@ -140,7 +140,7 @@ Return only the JSON object, no other text."""
         client=client,
         call_type="resume_intake",
         job_id=None,
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-5",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=4000,
     )

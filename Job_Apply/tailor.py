@@ -151,7 +151,7 @@ Return ONLY this JSON with no other text:
             client=client,
             call_type='intake',
             job_id=job_id,
-            model='claude-sonnet-4-20250514',
+            model='claude-sonnet-5',
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1500
         )
@@ -270,7 +270,7 @@ Return ONLY this JSON:
             client=client,
             call_type='tailor',
             job_id=job_id,
-            model='claude-sonnet-4-20250514',
+            model='claude-sonnet-5',
             messages=[{"role": "user", "content": prompt}],
             max_tokens=4000
         )

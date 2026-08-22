@@ -8,6 +8,12 @@ MODEL_PRICING = {
     "claude-haiku-4-5-20251001": {"input": 0.000001,  "output": 0.000005},
     "claude-sonnet-4-20250514":  {"input": 0.000003,  "output": 0.000015},
     "claude-opus-4-20250514":    {"input": 0.000005,  "output": 0.000025},
+    # claude-sonnet-4-20250514 was retired from the API (this app hit a 404
+    # calling it) and every call site now uses claude-sonnet-5 instead.
+    # Reusing the Sonnet 4 rate here as a placeholder — it's unverified for
+    # Sonnet 5, so treat governance.html's cost figures as approximate until
+    # this is checked against actual current pricing.
+    "claude-sonnet-5":           {"input": 0.000003,  "output": 0.000015},
 }
 DEFAULT_INPUT_PRICE  = 0.000003
 DEFAULT_OUTPUT_PRICE = 0.000015
