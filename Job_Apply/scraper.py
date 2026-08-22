@@ -79,7 +79,15 @@ def run_search(titles, location, country, exclude_keywords,
                is_remote_search=False, results=25, pass_name="canada", mode=""):
     """mode is the market's own work-mode ("remote"/"hybrid"/"contract"/"on-site"),
     used for the same post-filtering the old code keyed off specific pass_name
-    strings — pass_name itself is now just the label saved onto each job."""
+    strings — pass_name itself is now just the label saved onto each job.
+
+    country is now the market's actual country name (e.g. "Canada", "United
+    Kingdom", "Germany") from the Settings page's full country list, passed
+    straight through to jobspy's country_indeed rather than collapsed to a
+    Canada/US binary. jobspy isn't installed in the environment this was
+    written in, so which country names it actually recognizes is unverified
+    here — an unsupported one will surface as a per-market scrape error
+    below rather than a silent mismap to the wrong country's job board."""
     all_jobs = []
     for title in titles:
         try:
@@ -90,7 +98,7 @@ def run_search(titles, location, country, exclude_keywords,
                 "results_wanted": results,
                 "hours_old": 168,
                 "description_format": "markdown",
-                "country_indeed": "Canada" if country == "canada" else "USA"
+                "country_indeed": country or "Canada"
             }
             if is_remote_search:
                 kwargs["is_remote"] = True
@@ -124,7 +132,12 @@ def run_search(titles, location, country, exclude_keywords,
                     "description": description,
                     "country": country,
                     "is_remote": is_remote,
-                    "visa_required": 1 if (country == "us" and detect_visa_required(description)) else 0,
+                    # Was gated on country == "us" — that was really just
+                    # standing in for "this market is the US". The keywords
+                    # detect_visa_required() looks for aren't US-exclusive
+                    # phrasing, so run it for every market now rather than
+                    # add another country-name string match.
+                    "visa_required": 1 if detect_visa_required(description) else 0,
                     "search_pass": pass_name
                 })
                 added += 1
@@ -195,7 +208,7 @@ def run_scrape():
     for i, market in enumerate(markets, start=1):
         location = market.get("location") or ""
         mode = (market.get("mode") or "").lower()
-        country = "us" if (market.get("country") or "").lower().startswith("united") else "canada"
+        country = market.get("country") or "Canada"
         pass_name = market_pass_name(market)
         results = RESULTS_BY_MODE.get(mode, DEFAULT_RESULTS)
 
