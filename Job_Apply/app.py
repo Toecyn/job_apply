@@ -515,6 +515,93 @@ def api_add_job():
     
     return jsonify({"success": True, "job_id": job_id, "score": score})
 
+
+# ── Settings / Profile ──
+# Backs templates/settings.html. Everything here is single-tenant (one
+# profile row, id=1 — see profile_store.py) matching the rest of the app's
+# zero-auth architecture; going multi-tenant later means adding auth and
+# threading an account id through profile_store instead of these routes.
+
+@app.route("/settings")
+def settings():
+    return render_template("settings.html")
+
+
+@app.route("/api/profile", methods=["GET"])
+def api_get_profile():
+    from profile_store import get_profile
+    return jsonify(get_profile() or {})
+
+
+@app.route("/api/profile", methods=["POST"])
+def api_save_profile():
+    from profile_store import save_profile, SETTINGS_FIELDS
+    data = request.json or {}
+    fields = {k: v for k, v in data.items() if k in SETTINGS_FIELDS}
+    if not fields:
+        return jsonify({"error": "No recognized profile fields in request"}), 400
+    save_profile(fields)
+    return jsonify({"success": True})
+
+
+@app.route("/api/profile/resume/extract", methods=["POST"])
+def api_profile_resume_extract():
+    """Step 1 of the CV upload flow: PDF/Word -> plain text -> one Claude
+    call -> a resume_json draft. Returns the draft for the settings page to
+    show in an editable review screen — nothing is saved to the profile yet.
+    The original file is uploaded to Blob storage and its URL saved
+    immediately though, since that part needs no human review."""
+    if "resume" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    file = request.files["resume"]
+    filename = file.filename or "resume"
+    data = file.read()
+    if not data:
+        return jsonify({"error": "Uploaded file is empty"}), 400
+    if len(data) > 8 * 1024 * 1024:
+        return jsonify({"error": "File too large — 8MB max"}), 400
+
+    try:
+        from resume_intake import extract_text, draft_resume_json
+        text = extract_text(data, filename)
+        if len(text.strip()) < 200:
+            return jsonify({"error": "Couldn't read enough text from that file — try a different export."}), 400
+        draft = draft_resume_json(text)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    # Non-fatal: the draft is still useful even if storage isn't set up yet.
+    try:
+        from storage import upload as blob_upload
+        from profile_store import save_profile
+        lower = filename.lower()
+        if lower.endswith(".pdf"):
+            content_type = "application/pdf"
+        else:
+            content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        file_url = blob_upload(f"resumes/{filename}", data, content_type)
+        save_profile({"resume_file_url": file_url, "resume_filename": filename})
+    except Exception as e:
+        print(f"Resume storage upload failed (draft still returned): {e}")
+
+    return jsonify({"draft": draft})
+
+
+@app.route("/api/profile/resume/confirm", methods=["POST"])
+def api_profile_resume_confirm():
+    """Step 2: the user has reviewed/edited the draft from /extract — save
+    it as the real resume_json. Kept as a separate endpoint from
+    /api/profile (POST) so a raw client payload can never silently
+    overwrite resume_json outside this reviewed path."""
+    from profile_store import save_profile
+    data = request.json or {}
+    resume_json = data.get("resume_json")
+    if not resume_json:
+        return jsonify({"error": "resume_json required"}), 400
+    save_profile({"resume_json": resume_json})
+    return jsonify({"success": True})
+
+
 if __name__ == "__main__":
     from scraper import init_db
     init_db()

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Apply Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   JOB APPLY — DESIGN SYSTEM (shared across all templates)
+   ============================================================ */
+:root{
+  --font-ui:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --navy-50:#eef4fa; --navy-100:#d9e6f3; --navy-200:#b3cce6;
+  --navy-400:#3f74a6; --navy-500:#2a5f92; --navy-600:#1F4E79;
+  --navy-700:#183c5e; --navy-800:#122d47; --navy-900:#0c1f31;
+
+  --n-0:#ffffff; --n-25:#fcfcfd; --n-50:#f7f8fa; --n-100:#f0f2f5; --n-200:#e6e9ef;
+  --n-300:#d3d8e0; --n-400:#aab2bf; --n-500:#79828f; --n-600:#565f6c; --n-700:#3b434e;
+  --n-800:#252b33; --n-900:#12161b;
+
+  --success:#0f7a4d; --success-fg:#08633d; --success-bg:#e9f8f0; --success-bd:#bfe8d4;
+  --warn:#b06a06;    --warn-fg:#8a5205;    --warn-bg:#fdf5e6;    --warn-bd:#f2ddb0;
+  --danger:#c0362b;  --danger-fg:#9c2b22;  --danger-bg:#fdeeec;  --danger-bd:#f5cdc8;
+  --info:#1F4E79;    --info-fg:#183c5e;    --info-bg:#eef4fa;    --info-bd:#cfe0ef;
+  --neutral-bg:#f0f2f5; --neutral-fg:#565f6c; --neutral-bd:#e6e9ef;
+
+  --bg:var(--n-100); --surface:var(--n-0); --surface-2:var(--n-50); --surface-3:var(--n-25);
+  --border:var(--n-200); --border-strong:var(--n-300);
+  --text:var(--n-900); --text-2:var(--n-600); --text-3:var(--n-500);
+  --accent:var(--navy-600); --accent-hover:var(--navy-700); --accent-soft:var(--navy-50);
+  --on-accent:#ffffff;
+
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-full:999px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px; --sp-12:56px;
+
+  --shadow-xs:0 1px 2px rgba(16,22,31,.05);
+  --shadow-sm:0 1px 3px rgba(16,22,31,.07),0 1px 2px rgba(16,22,31,.04);
+  --shadow-md:0 4px 14px -4px rgba(16,22,31,.12),0 2px 5px -2px rgba(16,22,31,.06);
+  --shadow-lg:0 24px 48px -18px rgba(12,31,49,.35),0 8px 20px -12px rgba(12,31,49,.2);
+  --ring:0 0 0 3px rgba(31,78,121,.18);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+html[data-theme="dark"]{
+  --bg:#0d1117; --surface:#141a22; --surface-2:#1a212b; --surface-3:#11171e;
+  --border:#242c37; --border-strong:#333d4a;
+  --text:#e8ecf1; --text-2:#a2adbb; --text-3:#7c8896;
+  --accent:#5b93c9; --accent-hover:#78a8d8; --accent-soft:#16283a; --on-accent:#08131d;
+  --success:#4ac489; --success-fg:#7fdcae; --success-bg:#0f2a1f; --success-bd:#1e4735;
+  --warn:#e2a340;   --warn-fg:#f0c179;    --warn-bg:#2b2113;    --warn-bd:#4a3a1c;
+  --danger:#e2695d; --danger-fg:#f19a91;  --danger-bg:#2c1614;  --danger-bd:#4d2723;
+  --info:#6fa6da;   --info-fg:#9cc4e8;    --info-bg:#15242f;    --info-bd:#263d51;
+  --neutral-bg:#1c232d; --neutral-fg:#a2adbb; --neutral-bd:#2a323d;
+  --shadow-lg:0 24px 60px -20px rgba(0,0,0,.7);
+  --ring:0 0 0 3px rgba(91,147,201,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-ui);font-size:14px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;letter-spacing:-.018em;font-weight:600}
+.h1{font-size:24px;line-height:1.2}
+.h2{font-size:17px;line-height:1.3}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--text-2)}
+.dim{color:var(--text-3)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+
+.appbar{position:sticky;top:0;z-index:50;background:color-mix(in oklab,var(--surface) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--border)}
+.appbar-inner{max-width:1180px;margin:0 auto;padding:0 var(--sp-6);height:58px;display:flex;align-items:center;gap:var(--sp-6)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.02em;flex-shrink:0}
+.brand-mark{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--navy-500),var(--navy-800));color:#fff;font-size:11px;font-weight:700;letter-spacing:.02em}
+.nav{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-link{padding:6px 11px;border-radius:var(--r-sm);font-size:13.5px;font-weight:500;color:var(--text-2);
+  white-space:nowrap;transition:background .15s var(--ease),color .15s var(--ease)}
+.nav-link:hover{background:var(--surface-2);color:var(--text)}
+.nav-link.active{color:var(--text);background:var(--accent-soft);font-weight:600}
+.appbar-actions{margin-left:auto;display:flex;align-items:center;gap:var(--sp-2)}
+.icon-btn{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);
+  display:grid;place-items:center;cursor:pointer;color:var(--text-2);transition:.15s var(--ease)}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+
+.page{max-width:760px;margin:0 auto;padding:var(--sp-8) var(--sp-6) 120px}
+.page-head{margin-bottom:var(--sp-6)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 14px;border-radius:var(--r-sm);
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:13.5px;font-weight:550;
+  cursor:pointer;transition:.15s var(--ease);box-shadow:var(--shadow-xs);white-space:nowrap}
+.btn:hover{background:var(--surface-2);border-color:var(--n-400)}
+.btn:focus-visible{outline:none;box-shadow:var(--ring)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-sm{padding:5px 10px;font-size:12.5px}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.label{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
+.desc{font-size:12px;color:var(--text-3);margin-top:-2px}
+.input,.select,.textarea{width:100%;padding:8px 11px;border-radius:var(--r-sm);border:1px solid var(--border-strong);
+  background:var(--surface);font-size:13.5px;transition:.15s var(--ease)}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-xs)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:var(--r-full);
+  font-size:11.5px;font-weight:600;border:1px solid var(--neutral-bd);background:var(--neutral-bg);color:var(--neutral-fg)}
+
+/* ============================================================
+   PAGE: SETTINGS
+   ============================================================ */
+.settings-section{margin-bottom:var(--sp-4);overflow:hidden}
+.section-head{padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
+.section-head h2{font-size:14.5px;font-weight:600}
+.section-body{padding:var(--sp-5);display:flex;flex-direction:column;gap:var(--sp-4)}
+
+/* resume */
+.resume-current{display:flex;align-items:center;gap:var(--sp-3);background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.resume-icon{width:36px;height:36px;border-radius:var(--r-sm);flex-shrink:0;background:var(--success-bg);
+  color:var(--success-fg);display:grid;place-items:center;font-size:14px;font-weight:700;font-family:var(--font-mono)}
+.resume-meta{flex:1;min-width:0}
+.resume-meta .name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume-meta .sub{font-size:11.5px;color:var(--text-3);margin-top:2px}
+.resume-actions{display:flex;gap:6px;flex-shrink:0}
+
+.dropzone{border:1.5px dashed var(--border-strong);border-radius:var(--r-md);padding:22px 18px;text-align:center;
+  background:var(--surface-2);cursor:pointer;transition:.15s var(--ease)}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accent-soft)}
+.dropzone .glyph{width:34px;height:34px;margin:0 auto 10px;border-radius:var(--r-sm);background:var(--accent-soft);
+  color:var(--accent);display:grid;place-items:center;font-size:16px}
+.dropzone strong{font-size:13.5px;display:block}
+.dropzone span{font-size:12px;color:var(--text-3);display:block;margin-top:3px}
+
+.notice{display:flex;gap:10px;align-items:flex-start;border-radius:var(--r-md);padding:11px 13px;
+  font-size:12.5px;line-height:1.55;background:var(--warn-bg);color:var(--warn-fg)}
+.notice b{display:block;margin-bottom:2px}
+.notice a{color:inherit;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+
+/* chips */
+.chipfield{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid var(--border-strong);
+  border-radius:var(--r-sm);padding:7px 8px;background:var(--surface)}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--accent-soft);color:var(--accent);
+  font-size:12.5px;font-weight:500;padding:4px 4px 4px 10px;border-radius:var(--r-full)}
+.chip button{all:unset;cursor:pointer;width:15px;height:15px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;font-size:12px;line-height:1;color:inherit}
+.chip button:hover{background:rgba(31,78,121,.18)}
+.chipfield input{border:none;outline:none;flex:1;min-width:120px;font-size:13px;padding:4px 2px;background:transparent;color:var(--text)}
+.chip.exclude{background:var(--danger-bg);color:var(--danger-fg)}
+.chip.exclude button:hover{background:rgba(192,54,43,.18)}
+.chip.skill{background:var(--info-bg);color:var(--info-fg)}
+.chip.skill button:hover{background:rgba(31,78,121,.18)}
+
+/* markets */
+.market-list{display:flex;flex-direction:column;gap:8px}
+.market-row{display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:8px;align-items:center;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 10px}
+@media(max-width:600px){.market-row{grid-template-columns:1fr 1fr}.market-row .icon-btn{grid-column:2;justify-self:end}}
+.market-row input,.market-row select{font-size:12.5px;padding:7px 9px;background:var(--surface)}
+.add-row{display:flex;align-items:center;justify-content:center;gap:6px;background:none;
+  border:1px dashed var(--border-strong);color:var(--accent);font-size:12.5px;font-weight:600;
+  padding:9px 12px;border-radius:var(--r-sm);cursor:pointer}
+.add-row:hover{background:var(--accent-soft);border-color:var(--accent)}
+
+/* toggle */
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.switch-row .label-block strong{font-size:13px;font-weight:600;display:block}
+.switch-row .label-block span{font-size:12px;color:var(--text-3)}
+.switch{position:relative;width:38px;height:22px;flex-shrink:0}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.switch .track{position:absolute;inset:0;background:var(--border-strong);border-radius:20px;transition:background .15s}
+.switch .track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--surface);
+  border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.switch input:checked + .track{background:var(--success)}
+.switch input:checked + .track::after{transform:translateX(16px)}
+.switch input:focus-visible + .track{outline:2px solid var(--accent);outline-offset:2px}
+
+/* swatches */
+.swatch-row{display:flex;gap:8px}
+.swatch{width:30px;height:30px;border-radius:var(--r-sm);cursor:pointer;border:2px solid transparent;position:relative}
+.swatch.selected{border-color:var(--text)}
+.swatch.selected::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:13px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+
+/* save bar */
+.savebar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);
+  box-shadow:0 -4px 16px rgba(16,22,31,.08);padding:12px 24px;display:flex;justify-content:center;z-index:40}
+.savebar-inner{max-width:760px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.savebar .status{font-size:12.5px;color:var(--text-3)}
+.savebar .status b{color:var(--success);font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="/"><span class="brand-mark">JA</span><span class="brand-text">Job Apply</span></a>
+    <nav class="nav">
+      <a class="nav-link" href="/">Dashboard</a>
+      <a class="nav-link" href="/governance">Governance</a>
+      <a class="nav-link" href="/skills">Skills</a>
+      <a class="nav-link" href="/simulate">Simulate</a>
+      <a class="nav-link active" href="/settings">Settings</a>
+    </nav>
+    <div class="appbar-actions">
+      <button class="icon-btn" type="button" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="theme-glyph">◐</span></button>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-head">
+    <div class="eyebrow">Profile</div>
+    <h1 class="h1" style="margin-top:4px">Search &amp; resume profile</h1>
+    <p class="muted" style="margin:6px 0 0">These settings drive every scrape, score, and tailored resume. Change your target roles, markets, or CV any time — the next scheduled search picks it up automatically.</p>
+  </div>
+
+  <!-- RESUME -->
+  <section class="card settings-section">
+    <div class="section-head"><h2>Resume</h2><span class="dim" style="font-size:12px">Used to score jobs and write tailored versions</span></div>
+    <div class="section-body">
+      <div class="resume-current">
+        <div class="resume-icon">CV</div>
+        <div class="resume-meta">
+          <div class="name" id="resume-filename">No resume uploaded yet</div>
+          <div class="sub" id="resume-meta-sub">Upload a PDF or Word resume to get started</div>
+        </div>
+        <div class="resume-actions">
+          <button class="btn btn-sm" type="button" id="resume-review-btn" style="display:none">Review parsed data</button>
+        </div>
+      </div>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a resume, PDF or Word">
+        <div class="glyph">↑</div>
+        <strong>Drop a PDF or Word resume, or click to browse</strong>
+        <span>We'll extract your roles, skills, and summary — you confirm before anything is saved</span>
+        <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx" style="display:none">
+      </div>
+
+      <div class="notice" id="parse-banner" style="display:none">
+        <span>⚠</span>
+        <div>
+          <b>Some details need your input</b>
+          A resume bullet is missing a number or specific detail. Fill it in so tailored resumes never invent one.
+        </div>
+      </div>
+
+      <div id="resume-review" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- TARGET ROLES -->
+  <section class="card settings-section">
+    <div class="section-head"><h2>Target roles</h2><span class="dim" style="font-size:12px">Replaces the fixed title list — searched verbatim, plus close variants</span></div>
+    <div class="section-body">
+      <div class="field">
+        <label class="label" for="titles-input">Job titles</label>
+        <div class="chipfield" id="titles">
+          <input type="text" id="titles-input" placeholder="Add a title and press Enter…">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="exclude-input">Exclude if the title contains</label>
+        <div class="chipfield" id="exclude">
+          <input type="text" id="exclude-input" placeholder="Add a word to filter out…">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEARCH MARKETS -->
+  <section class="card settings-section">
+    <div class="section-head"><h2>Search markets</h2><span class="dim" style="font-size:12px">Each row runs as its own search pass</span></div>
+    <div class="section-body">
+      <div class="market-list" id="market-list"></div>
+      <button class="add-row" type="button" id="add-market-btn">+ Add a market</button>
+    </div>
+  </section>
+
+  <!-- SKILLS & KEYWORDS -->
+  <section class="card settings-section">
+    <div class="section-head"><h2>Skills &amp; scoring keywords</h2><span class="dim" style="font-size:12px">A posting must match one of these to be worth scoring</span></div>
+    <div class="section-body">
+      <div class="field">
+        <label class="label" for="skills-input">Core skills</label>
+        <div class="chipfield" id="skills-chips">
+          <input type="text" id="skills-input" placeholder="Add a skill and press Enter…">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="kw-input">Title keywords that trigger scoring</label>
+        <div class="chipfield" id="kw-chips">
+          <input type="text" id="kw-input" placeholder="Add a keyword…">
+        </div>
+        <span class="desc">Auto-filled from your target roles — edit if postings are slipping through uncounted</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREFERENCES -->
+  <section class="card settings-section">
+    <div class="section-head"><h2>Preferences</h2></div>
+    <div class="section-body">
+      <div class="switch-row">
+        <div class="label-block"><strong>Open to remote roles</strong><span>Factored into the AI match score</span></div>
+        <label class="switch"><input type="checkbox" id="pref-remote" checked><span class="track"></span></label>
+      </div>
+      <div class="switch-row">
+        <div class="label-block"><strong>Needs visa sponsorship</strong><span>Flags and deprioritizes "no sponsorship" postings</span></div>
+        <label class="switch"><input type="checkbox" id="pref-visa"><span class="track"></span></label>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="field">
+          <label class="label" for="min-score">Default minimum match score</label>
+          <input class="input" type="number" id="min-score" value="70" min="0" max="100">
+        </div>
+        <div class="field">
+          <label class="label" for="stale-days">Mark unreviewed jobs stale after</label>
+          <select class="select" id="stale-days">
+            <option value="3">3 days</option>
+            <option value="7" selected>7 days</option>
+            <option value="14">14 days</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">Tailored resume accent color</label>
+        <div class="swatch-row" id="swatch-row">
+          <div class="swatch selected" data-color="#1F4E79" style="background:#1F4E79" title="Navy"></div>
+          <div class="swatch" data-color="#2E7D5B" style="background:#2E7D5B" title="Emerald"></div>
+          <div class="swatch" data-color="#7A3E9D" style="background:#7A3E9D" title="Plum"></div>
+          <div class="swatch" data-color="#1a1a1a" style="background:#1a1a1a" title="Charcoal"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="savebar">
+  <div class="savebar-inner">
+    <span class="status" id="save-status">Not saved yet — this profile is stored on this device until backend sync ships</span>
+    <button class="btn btn-primary" type="button" id="save-btn">Save profile</button>
+  </div>
+</div>
+
+<script>
+/* ---------- theme ---------- */
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
+  var g=document.getElementById('theme-glyph'); if(g) g.textContent = t==='dark' ? '◑' : '◐';}
+function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  try{localStorage.setItem('ja-theme',t);}catch(e){} applyTheme(t);}
+try{applyTheme(localStorage.getItem('ja-theme')||'light');}catch(e){}
+
+/* ---------- chip inputs ---------- */
+function makeChip(text, cls) {
+  var chip = document.createElement('span');
+  chip.className = 'chip' + (cls ? ' ' + cls : '');
+  var label = document.createTextNode(text + ' ');
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.setAttribute('aria-label', 'Remove'); btn.textContent = '×';
+  btn.onclick = function(){ chip.remove(); };
+  chip.appendChild(label); chip.appendChild(btn);
+  return chip;
+}
+function wireChipField(fieldId, inputId, cls) {
+  var field = document.getElementById(fieldId);
+  var input = document.getElementById(inputId);
+  input.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && input.value.trim()) {
+      e.preventDefault();
+      field.insertBefore(makeChip(input.value.trim(), cls), input);
+      input.value = '';
+    }
+  });
+}
+function getChips(fieldId) {
+  return Array.prototype.slice.call(document.querySelectorAll('#' + fieldId + ' .chip'))
+    .map(function(c){ return c.childNodes[0].textContent.trim(); })
+    .filter(function(t){ return t; });
+}
+function setChips(fieldId, cls, values) {
+  var field = document.getElementById(fieldId);
+  var input = field.querySelector('input');
+  Array.prototype.slice.call(field.querySelectorAll('.chip')).forEach(function(c){ c.remove(); });
+  (values || []).forEach(function(v){ field.insertBefore(makeChip(v, cls), input); });
+}
+wireChipField('titles', 'titles-input', null);
+wireChipField('exclude', 'exclude-input', 'exclude');
+wireChipField('skills-chips', 'skills-input', 'skill');
+wireChipField('kw-chips', 'kw-input', null);
+// NOTE: "Core skills" chips are not their own profile column — they mirror
+// resume_json.technical_stack (the same field scorer.py reads as
+// profile['skills']). Editing them here is local-only for now; the source
+// of truth is whatever the resume upload/review flow saves.
+
+/* ---------- search markets ---------- */
+function marketRow(location, mode, country) {
+  var row = document.createElement('div');
+  row.className = 'market-row';
+  row.innerHTML =
+    '<input class="input" type="text" value="' + (location || '') + '" placeholder="City, region" aria-label="Location">' +
+    '<select class="select" aria-label="Work mode">' +
+      ['On-site','Hybrid','Remote'].map(function(m){ return '<option' + (m===mode?' selected':'') + '>' + m + '</option>'; }).join('') +
+    '</select>' +
+    '<select class="select" aria-label="Country">' +
+      ['Canada','United States'].map(function(c){ return '<option' + (c===country?' selected':'') + '>' + c + '</option>'; }).join('') +
+    '</select>' +
+    '<button class="icon-btn" type="button" aria-label="Remove market">×</button>';
+  row.querySelector('.icon-btn').onclick = function(){ row.remove(); };
+  return row;
+}
+var marketList = document.getElementById('market-list');
+function getMarkets() {
+  return Array.prototype.slice.call(marketList.querySelectorAll('.market-row')).map(function(row){
+    var f = row.querySelectorAll('input, select');
+    return { location: f[0].value.trim(), mode: f[1].value, country: f[2].value };
+  }).filter(function(m){ return m.location; });
+}
+function setMarkets(markets) {
+  marketList.innerHTML = '';
+  var rows = (markets && markets.length)
+    ? markets.map(function(m){ return [m.location, m.mode, m.country]; })
+    : [['Canada', 'Remote', 'Canada']];
+  rows.forEach(function(m){ marketList.appendChild(marketRow(m[0], m[1], m[2])); });
+}
+setMarkets([]);
+document.getElementById('add-market-btn').addEventListener('click', function(){
+  var row = marketRow('', 'On-site', 'Canada');
+  marketList.appendChild(row);
+  row.querySelector('input').focus();
+});
+
+/* ---------- swatches ---------- */
+document.getElementById('swatch-row').addEventListener('click', function(e){
+  var s = e.target.closest('.swatch');
+  if (!s) return;
+  document.querySelectorAll('.swatch').forEach(function(x){ x.classList.remove('selected'); });
+  s.classList.add('selected');
+});
+function getBrandColor() {
+  var sel = document.querySelector('.swatch.selected');
+  return sel ? sel.getAttribute('data-color') : '#1F4E79';
+}
+function setBrandColor(hex) {
+  if (!hex) return;
+  var wanted = '#' + String(hex).replace('#', '').toLowerCase();
+  document.querySelectorAll('.swatch').forEach(function(s){
+    s.classList.toggle('selected', s.getAttribute('data-color').toLowerCase() === wanted);
+  });
+}
+
+/* ---------- resume upload -> AI draft -> review -> confirm ---------- */
+var dz = document.getElementById('dropzone');
+var fileInput = document.getElementById('resume-file-input');
+var latestDraft = null;
+
+function escHtml(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function escAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
+
+dz.addEventListener('click', function(){ fileInput.click(); });
+dz.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+['dragenter','dragover'].forEach(function(evt){ dz.addEventListener(evt, function(e){ e.preventDefault(); dz.classList.add('drag'); }); });
+['dragleave'].forEach(function(evt){ dz.addEventListener(evt, function(e){ e.preventDefault(); dz.classList.remove('drag'); }); });
+dz.addEventListener('drop', function(e){ e.preventDefault(); dz.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', function(){ handleFile(fileInput.files[0]); });
+
+function handleFile(file) {
+  if (!file) return;
+  document.getElementById('resume-filename').textContent = file.name;
+  document.getElementById('resume-meta-sub').textContent = 'Uploading and reading…';
+  document.getElementById('resume-review-btn').style.display = 'none';
+  document.getElementById('parse-banner').style.display = 'none';
+  document.getElementById('resume-review').style.display = 'none';
+
+  var formData = new FormData();
+  formData.append('resume', file);
+  fetch('/api/profile/resume/extract', { method: 'POST', body: formData })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.error) {
+        document.getElementById('resume-meta-sub').textContent = 'Failed: ' + data.error;
+        return;
+      }
+      latestDraft = data.draft;
+      document.getElementById('resume-meta-sub').textContent =
+        'Parsed ' + (latestDraft.experience || []).length + ' roles — review below before saving';
+      renderResumeReview(latestDraft);
+    })
+    .catch(function(){
+      document.getElementById('resume-meta-sub').textContent = 'Upload failed — try again.';
+    });
+}
+
+function renderResumeReview(draft) {
+  var box = document.getElementById('resume-review');
+  var bulletCount = (draft.experience || []).reduce(function(n, r){ return n + (r.bullets || []).length; }, 0);
+  box.innerHTML =
+    '<div class="card" style="margin-top:14px;padding:16px;background:var(--surface-2)">' +
+      '<div class="eyebrow" style="margin-bottom:8px">Review before saving</div>' +
+      '<div class="field"><label class="label">Name</label><input class="input" id="rv-name" value="' + escAttr(draft.name) + '"></div>' +
+      '<div class="field" style="margin-top:10px"><label class="label">Summary</label><textarea class="textarea" id="rv-summary">' + escHtml(draft.summary) + '</textarea></div>' +
+      '<p class="desc" style="margin-top:10px">' + (draft.experience || []).length + ' roles, ' + bulletCount + ' bullets extracted — nothing here was invented, only reformatted. Fix the fields above if anything looks off; the full parsed resume saves as-is.</p>' +
+      '<div style="display:flex;gap:8px;margin-top:12px">' +
+        '<button class="btn btn-primary btn-sm" type="button" id="rv-confirm">Confirm &amp; save resume</button>' +
+        '<button class="btn btn-sm" type="button" id="rv-discard">Discard</button>' +
+      '</div>' +
+    '</div>';
+  box.style.display = 'block';
+
+  document.getElementById('rv-confirm').addEventListener('click', function(){
+    draft.name = document.getElementById('rv-name').value.trim() || draft.name;
+    draft.summary = document.getElementById('rv-summary').value.trim() || draft.summary;
+    fetch('/api/profile/resume/confirm', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ resume_json: draft })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (data.error) { alert('Save failed: ' + data.error); return; }
+      box.style.display = 'none';
+      document.getElementById('resume-meta-sub').textContent = 'Saved — used for scoring and tailoring';
+      document.getElementById('resume-review-btn').style.display = 'inline-flex';
+      if (draft.technical_stack) setChips('skills-chips', 'skill', draft.technical_stack);
+    });
+  });
+  document.getElementById('rv-discard').addEventListener('click', function(){
+    box.style.display = 'none';
+    document.getElementById('resume-meta-sub').textContent = 'Upload cancelled — no changes saved';
+  });
+}
+document.getElementById('resume-review-btn').addEventListener('click', function(){
+  if (latestDraft) renderResumeReview(latestDraft);
+});
+
+/* ---------- load existing profile on page open ---------- */
+function loadProfile() {
+  fetch('/api/profile').then(function(r){ return r.json(); }).then(function(p){
+    if (!p || Object.keys(p).length === 0) return;
+    setChips('titles', null, p.target_titles);
+    setChips('exclude', 'exclude', p.exclude_keywords);
+    setChips('kw-chips', null, p.score_keywords);
+    if (p.markets && p.markets.length) setMarkets(p.markets);
+    document.getElementById('pref-remote').checked = p.open_to_remote !== false && p.open_to_remote !== 0;
+    document.getElementById('pref-visa').checked = !!p.visa_required;
+    if (p.min_score_default != null) document.getElementById('min-score').value = p.min_score_default;
+    if (p.stale_days != null) document.getElementById('stale-days').value = String(p.stale_days);
+    setBrandColor(p.brand_color);
+
+    if (p.resume_json) {
+      latestDraft = p.resume_json;
+      setChips('skills-chips', 'skill', p.resume_json.technical_stack);
+      document.getElementById('resume-filename').textContent = p.resume_filename || p.resume_json.name + ' — resume';
+      document.getElementById('resume-meta-sub').textContent =
+        'On file — used for scoring and tailoring (' + (p.resume_json.experience || []).length + ' roles)';
+      document.getElementById('resume-review-btn').style.display = 'inline-flex';
+    } else if (p.resume_filename) {
+      document.getElementById('resume-filename').textContent = p.resume_filename;
+      document.getElementById('resume-meta-sub').textContent = 'File uploaded but not yet confirmed — upload it again to review and save';
+    }
+  }).catch(function(e){ console.log('Could not load profile:', e); });
+}
+loadProfile();
+
+/* ---------- save ---------- */
+document.getElementById('save-btn').addEventListener('click', function(){
+  var status = document.getElementById('save-status');
+  var payload = {
+    target_titles: getChips('titles'),
+    exclude_keywords: getChips('exclude'),
+    score_keywords: getChips('kw-chips'),
+    markets: getMarkets(),
+    open_to_remote: document.getElementById('pref-remote').checked,
+    visa_required: document.getElementById('pref-visa').checked,
+    min_score_default: parseInt(document.getElementById('min-score').value, 10) || 70,
+    stale_days: parseInt(document.getElementById('stale-days').value, 10) || 7,
+    brand_color: getBrandColor()
+  };
+  status.textContent = 'Saving…';
+  fetch('/api/profile', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  }).then(function(r){ return r.json(); }).then(function(data){
+    if (data.error) { status.textContent = 'Save failed: ' + data.error; return; }
+    status.innerHTML = 'Saved just now <b>·</b> next scrape uses these settings';
+  }).catch(function(){ status.textContent = 'Save failed — try again.'; });
+});
+</script>
+</body>
+</html>

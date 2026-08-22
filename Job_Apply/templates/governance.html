@@ -1,166 +1,328 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Governance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; color: #1a1a1a; }
-header { background: #1F4E79; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-header h1 { font-size: 18px; font-weight: 600; }
-.nav { display: flex; gap: 12px; }
-.nav a { color: white; text-decoration: none; font-size: 13px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; }
-.nav a:hover { background: rgba(255,255,255,0.1); }
-.page { padding: 24px; }
-.section-title { font-size: 13px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; margin-top: 24px; }
-.cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 8px; }
-.cards2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
-.card { background: white; border-radius: 8px; padding: 18px 20px; border: 1px solid #e5e5e5; }
-.card .num { font-size: 28px; font-weight: 700; color: #1F4E79; margin-bottom: 4px; }
-.card .lbl { font-size: 12px; color: #666; }
-.card .sub { font-size: 11px; color: #999; margin-top: 4px; }
-.green { color: #1e7e34 !important; }
-.amber { color: #856404 !important; }
-.red { color: #c0392b !important; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: left; padding: 10px 12px; background: #f8f9fa; border-bottom: 2px solid #e5e5e5; font-weight: 600; color: #444; font-size: 12px; }
-td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; color: #333; }
-tr:hover td { background: #f8f9fa; }
-.table-card { background: white; border-radius: 8px; border: 1px solid #e5e5e5; overflow: hidden; margin-bottom: 16px; }
-.table-header { padding: 14px 16px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center; }
-.table-header h3 { font-size: 14px; font-weight: 600; }
-.badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-.b-score { background: #e8f0f7; color: #1F4E79; }
-.b-tailor { background: #f0e8ff; color: #6b35c7; }
-.b-intake { background: #fff3cd; color: #856404; }
-.b-success { background: #e6f4ea; color: #1e7e34; }
-.b-fail { background: #fde8e8; color: #c0392b; }
-.empty { padding: 24px; text-align: center; color: #888; font-size: 13px; }
-.cost { font-family: monospace; }
+/* ============================================================
+   JOB APPLY — DESIGN SYSTEM (shared across all templates)
+   ============================================================ */
+:root{
+  --font-ui:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  /* brand navy scale */
+  --navy-50:#eef4fa; --navy-100:#d9e6f3; --navy-200:#b3cce6;
+  --navy-400:#3f74a6; --navy-500:#2a5f92; --navy-600:#1F4E79;
+  --navy-700:#183c5e; --navy-800:#122d47; --navy-900:#0c1f31;
+
+  /* neutrals */
+  --n-0:#ffffff; --n-25:#fcfcfd; --n-50:#f7f8fa; --n-100:#f0f2f5; --n-200:#e6e9ef;
+  --n-300:#d3d8e0; --n-400:#aab2bf; --n-500:#79828f; --n-600:#565f6c; --n-700:#3b434e;
+  --n-800:#252b33; --n-900:#12161b;
+
+  /* semantic (one set, used identically everywhere) */
+  --success:#0f7a4d; --success-fg:#08633d; --success-bg:#e9f8f0; --success-bd:#bfe8d4;
+  --warn:#b06a06;    --warn-fg:#8a5205;    --warn-bg:#fdf5e6;    --warn-bd:#f2ddb0;
+  --danger:#c0362b;  --danger-fg:#9c2b22;  --danger-bg:#fdeeec;  --danger-bd:#f5cdc8;
+  --info:#1F4E79;    --info-fg:#183c5e;    --info-bg:#eef4fa;    --info-bd:#cfe0ef;
+  --neutral-bg:#f0f2f5; --neutral-fg:#565f6c; --neutral-bd:#e6e9ef;
+
+  /* surfaces */
+  --bg:var(--n-100); --surface:var(--n-0); --surface-2:var(--n-50); --surface-3:var(--n-25);
+  --border:var(--n-200); --border-strong:var(--n-300);
+  --text:var(--n-900); --text-2:var(--n-600); --text-3:var(--n-500);
+  --accent:var(--navy-600); --accent-hover:var(--navy-700); --accent-soft:var(--navy-50);
+  --on-accent:#ffffff;
+
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-full:999px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px; --sp-12:56px;
+
+  --shadow-xs:0 1px 2px rgba(16,22,31,.05);
+  --shadow-sm:0 1px 3px rgba(16,22,31,.07),0 1px 2px rgba(16,22,31,.04);
+  --shadow-md:0 4px 14px -4px rgba(16,22,31,.12),0 2px 5px -2px rgba(16,22,31,.06);
+  --shadow-lg:0 24px 48px -18px rgba(12,31,49,.35),0 8px 20px -12px rgba(12,31,49,.2);
+  --ring:0 0 0 3px rgba(31,78,121,.18);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+html[data-theme="dark"]{
+  --bg:#0d1117; --surface:#141a22; --surface-2:#1a212b; --surface-3:#11171e;
+  --border:#242c37; --border-strong:#333d4a;
+  --text:#e8ecf1; --text-2:#a2adbb; --text-3:#7c8896;
+  --accent:#5b93c9; --accent-hover:#78a8d8; --accent-soft:#16283a; --on-accent:#08131d;
+  --success:#4ac489; --success-fg:#7fdcae; --success-bg:#0f2a1f; --success-bd:#1e4735;
+  --warn:#e2a340;   --warn-fg:#f0c179;    --warn-bg:#2b2113;    --warn-bd:#4a3a1c;
+  --danger:#e2695d; --danger-fg:#f19a91;  --danger-bg:#2c1614;  --danger-bd:#4d2723;
+  --info:#6fa6da;   --info-fg:#9cc4e8;    --info-bg:#15242f;    --info-bd:#263d51;
+  --neutral-bg:#1c232d; --neutral-fg:#a2adbb; --neutral-bd:#2a323d;
+  --shadow-lg:0 24px 60px -20px rgba(0,0,0,.7);
+  --ring:0 0 0 3px rgba(91,147,201,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-ui);font-size:14px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;letter-spacing:-.018em;font-weight:600}
+.h1{font-size:24px;line-height:1.2}
+.h2{font-size:17px;line-height:1.3}
+.h3{font-size:14px;line-height:1.35}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--text-2)}
+.dim{color:var(--text-3)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+
+/* ---------- app bar / nav ---------- */
+.appbar{position:sticky;top:0;z-index:50;background:color-mix(in oklab,var(--surface) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--border)}
+.appbar-inner{max-width:1180px;margin:0 auto;padding:0 var(--sp-6);height:58px;display:flex;align-items:center;gap:var(--sp-6)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.02em;flex-shrink:0}
+.brand-mark{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--navy-500),var(--navy-800));color:#fff;font-size:11px;font-weight:700;letter-spacing:.02em}
+.nav{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-link{padding:6px 11px;border-radius:var(--r-sm);font-size:13.5px;font-weight:500;color:var(--text-2);
+  white-space:nowrap;transition:background .15s var(--ease),color .15s var(--ease)}
+.nav-link:hover{background:var(--surface-2);color:var(--text)}
+.nav-link.active{color:var(--text);background:var(--accent-soft);font-weight:600}
+.appbar-actions{margin-left:auto;display:flex;align-items:center;gap:var(--sp-2)}
+.icon-btn{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);
+  display:grid;place-items:center;cursor:pointer;color:var(--text-2);transition:.15s var(--ease)}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+
+/* ---------- layout ---------- */
+.page{max-width:1180px;margin:0 auto;padding:var(--sp-8) var(--sp-6) 96px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-4);flex-wrap:wrap;margin-bottom:var(--sp-6)}
+.section{margin-top:var(--sp-8)}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 14px;border-radius:var(--r-sm);
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:13.5px;font-weight:550;
+  cursor:pointer;transition:.15s var(--ease);box-shadow:var(--shadow-xs);white-space:nowrap}
+.btn:hover{background:var(--surface-2);border-color:var(--n-400)}
+.btn:focus-visible{outline:none;box-shadow:var(--ring)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-ghost{border-color:transparent;background:transparent;box-shadow:none;color:var(--text-2)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:12.5px}
+.btn-block{width:100%}
+
+/* ---------- forms ---------- */
+.field{display:flex;flex-direction:column;gap:5px}
+.label{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
+.input,.select,.textarea{width:100%;padding:8px 11px;border-radius:var(--r-sm);border:1px solid var(--border-strong);
+  background:var(--surface);font-size:13.5px;transition:.15s var(--ease)}
+.select{appearance:none;padding-right:28px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.textarea{min-height:88px;resize:vertical;line-height:1.6}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-xs)}
+.stat-grid{display:grid;gap:var(--sp-3);grid-template-columns:repeat(3,1fr)}
+@media(max-width:860px){.stat-grid{grid-template-columns:1fr}}
+.stat{position:relative;overflow:hidden;padding:var(--sp-5);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);box-shadow:var(--shadow-xs);transition:.18s var(--ease)}
+.stat::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent);opacity:.85}
+.stat.is-success::before{background:var(--success)} .stat.is-warn::before{background:var(--warn)}
+.stat-value{font-family:var(--font-mono);font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.05;margin-top:6px}
+.stat-label{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3)}
+.stat-sub{margin-top:6px;font-size:12.5px;color:var(--text-3)}
+a.stat{display:block}
+a.stat:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:var(--border-strong)}
+a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shadow:var(--ring)}
+
+/* ---------- badges ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:var(--r-full);
+  font-size:11.5px;font-weight:600;letter-spacing:.01em;border:1px solid var(--neutral-bd);
+  background:var(--neutral-bg);color:var(--neutral-fg);white-space:nowrap}
+.badge-info{background:var(--info-bg);color:var(--info-fg);border-color:var(--info-bd)}
+.badge-success{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-bd)}
+.badge-warn{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
+.badge-danger{background:var(--danger-bg);color:var(--danger-fg);border-color:var(--danger-bd)}
+.badge-dot::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
+
+/* ---------- spinner ---------- */
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid color-mix(in oklab,currentColor 25%,transparent);
+  border-top-color:currentColor;display:inline-block;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+
+/* ============================================================
+   PAGE STYLES
+   ============================================================ */
+.gov-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3)}
+@media(max-width:860px){.gov-grid-2{grid-template-columns:1fr}}
+.spark{position:absolute;right:0;bottom:0;left:0;height:38px;opacity:.28;pointer-events:none}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-xs);overflow:hidden}
+.panel-head{padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--border);display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3)}
+table.data{width:100%;border-collapse:collapse}
+table.data th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);
+  padding:10px var(--sp-5);background:var(--surface-2);border-bottom:1px solid var(--border);white-space:nowrap}
+table.data td{padding:11px var(--sp-5);border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle}
+table.data tbody tr:last-child td{border-bottom:none}
+table.data tbody tr:hover{background:var(--surface-2)}
+td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ts{font-family:var(--font-mono);font-size:12.5px;color:var(--text-2);white-space:nowrap}
+.err-cell{color:var(--danger-fg);font-size:12.5px}
+.table-empty{padding:var(--sp-10);text-align:center;color:var(--text-3)}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AI Governance Dashboard</h1>
-  <div class="nav">
-    <a href="/">Job Dashboard</a>
-    <a href="/governance">Governance</a>
+<header class="appbar">
+  <div class="appbar-inner">
+    <a class="brand" href="/"><span class="brand-mark">JA</span><span class="brand-text">Job Apply</span></a>
+    <nav class="nav">
+      <a class="nav-link" href="/">Dashboard</a>
+      <a class="nav-link active" href="/governance">Governance</a>
+      <a class="nav-link" href="/skills">Skills</a>
+      <a class="nav-link" href="/simulate">Simulate</a>
+      <a class="nav-link" href="/settings">Settings</a>
+    </nav>
+    <div class="appbar-actions">
+      <button class="icon-btn" type="button" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="theme-glyph">&#9680;</span></button>
+
+    </div>
   </div>
 </header>
 
-<div class="page">
-
-  <div class="section-title">Today</div>
-  <div class="cards">
-    <div class="card">
-      <div class="num">{{ today_calls }}</div>
-      <div class="lbl">AI calls today</div>
-    </div>
-    <div class="card">
-      <div class="num cost">${{ today_cost }}</div>
-      <div class="lbl">Cost today (USD)</div>
-    </div>
-    <div class="card">
-      <div class="num {% if today_success >= 95 %}green{% elif today_success >= 80 %}amber{% else %}red{% endif %}">{{ today_success }}%</div>
-      <div class="lbl">Success rate today</div>
+<main class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Observability</div>
+      <h1 class="h1" style="margin-top:4px">AI Governance Dashboard</h1>
+      <p class="muted" style="margin:6px 0 0">Cost, latency and reliability for every AI call the app makes.</p>
     </div>
   </div>
 
-  <div class="section-title">This week</div>
-  <div class="cards2">
-    <div class="card">
-      <div class="num">{{ week_calls }}</div>
-      <div class="lbl">Total AI calls this week</div>
-      <div class="sub">{{ total_calls }} all time</div>
+  <div class="section-head" style="margin-top:var(--sp-6)"><h2 class="h2">Today</h2></div>
+  <div class="stat-grid">
+    <div class="stat" style="color:var(--accent)">
+      <div class="stat-label">Calls</div>
+      <div class="stat-value" style="color:var(--text)">{{ today_calls }}</div>
+      <div class="stat-sub">AI requests today</div>
+      <svg class="spark" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 32 L25 27 L50 30 L75 18 L100 22 L125 12 L150 16 L175 7 L200 10 L200 40 L0 40 Z" fill="currentColor" opacity=".25"/><path d="M0 32 L25 27 L50 30 L75 18 L100 22 L125 12 L150 16 L175 7 L200 10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
     </div>
-    <div class="card">
-      <div class="num cost">${{ week_cost }}</div>
-      <div class="lbl">Total cost this week (USD)</div>
+    <div class="stat" style="color:var(--accent)">
+      <div class="stat-label">Spend</div>
+      <div class="stat-value" style="color:var(--text)">${{ today_cost }}</div>
+      <div class="stat-sub">Estimated USD today</div>
+      <svg class="spark" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 32 L25 27 L50 30 L75 18 L100 22 L125 12 L150 16 L175 7 L200 10 L200 40 L0 40 Z" fill="currentColor" opacity=".25"/><path d="M0 32 L25 27 L50 30 L75 18 L100 22 L125 12 L150 16 L175 7 L200 10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+    </div>
+    <div class="stat {% if today_success >= 95 %}is-success{% elif today_success >= 80 %}is-warn{% endif %}">
+      <div class="stat-label">Success rate</div>
+      <div class="stat-value" style="color:{% if today_success >= 95 %}var(--success-fg){% elif today_success >= 80 %}var(--warn-fg){% else %}var(--danger-fg){% endif %}">{{ today_success }}%</div>
+      <div class="stat-sub">Calls completed without error</div>
     </div>
   </div>
 
-  <div class="section-title">Performance by call type</div>
-  <div class="table-card">
-    <table>
-      <thead>
-        <tr>
-          <th>Call type</th>
-          <th>Avg latency (ms)</th>
-          <th>Total calls</th>
-          <th>Est. cost per call</th>
-        </tr>
-      </thead>
-      <tbody>
+  <div class="section">
+    <div class="section-head"><h2 class="h2">This week</h2></div>
+    <div class="gov-grid-2">
+      <div class="stat">
+        <div class="stat-label">Calls</div>
+        <div class="stat-value">{{ week_calls }}</div>
+        <div class="stat-sub"><span class="mono">{{ total_calls }}</span> all time</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Spend</div>
+        <div class="stat-value">${{ week_cost }}</div>
+        <div class="stat-sub">Estimated USD, last 7 days</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="panel">
+      <div class="panel-head"><h2 class="h2">Performance by call type</h2><span class="dim" style="font-size:12.5px">Averages across all recorded calls</span></div>
+      {% if latency %}
+      <table class="data">
+        <thead><tr><th>Call type</th><th class="num">Avg latency (ms)</th><th class="num">Total calls</th><th class="num">Est. cost per call</th></tr></thead>
+        <tbody>
         {% for row in latency %}
-        <tr>
-          <td><span class="badge {% if row[0] == 'score' %}b-score{% elif row[0] == 'tailor' %}b-tailor{% else %}b-intake{% endif %}">{{ row[0] }}</span></td>
-          <td>{{ row[1] }}ms</td>
-          <td>{{ row[2] }}</td>
-          <td class="cost">—</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4" class="empty">No calls recorded yet</td></tr>
+          <tr>
+            <td><span class="badge {% if row[0] == 'score' %}badge-info{% elif row[0] == 'tailor' %}badge-warn{% endif %}">{{ row[0] }}</span></td>
+            <td class="num">{{ row[1] }}</td>
+            <td class="num">{{ row[2] }}</td>
+            <td class="num dim">&mdash;</td>
+          </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+      {% else %}
+      <div class="table-empty">No calls recorded yet</div>
+      {% endif %}
+    </div>
   </div>
 
-  <div class="section-title">Recent AI calls</div>
-  <div class="table-card">
-    <table>
-      <thead>
-        <tr>
-          <th>Timestamp</th>
-          <th>Type</th>
-          <th>Latency</th>
-          <th>Cost</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
+  <div class="section">
+    <div class="panel">
+      <div class="panel-head"><h2 class="h2">Recent AI calls</h2></div>
+      {% if recent %}
+      <table class="data">
+        <thead><tr><th>Timestamp</th><th>Type</th><th class="num">Latency (ms)</th><th class="num">Cost</th><th>Status</th></tr></thead>
+        <tbody>
         {% for row in recent %}
-        <tr>
-          <td>{{ row[0] }}</td>
-          <td><span class="badge {% if row[1] == 'score' %}b-score{% elif row[1] == 'tailor' %}b-tailor{% else %}b-intake{% endif %}">{{ row[1] }}</span></td>
-          <td>{{ row[2] }}ms</td>
-          <td class="cost">${{ "%.6f"|format(row[3]) }}</td>
-          <td><span class="badge {% if row[4] == 1 %}b-success{% else %}b-fail{% endif %}">{% if row[4] == 1 %}OK{% else %}FAIL{% endif %}</span></td>
-        </tr>
-        {% else %}
-        <tr><td colspan="5" class="empty">No calls recorded yet</td></tr>
+          <tr>
+            <td class="ts">{{ row[0] }}</td>
+            <td><span class="badge {% if row[1] == 'score' %}badge-info{% elif row[1] == 'tailor' %}badge-warn{% endif %}">{{ row[1] }}</span></td>
+            <td class="num">{{ row[2] }}</td>
+            <td class="num">${{ "%.6f"|format(row[3]) }}</td>
+            <td>{% if row[4] == 1 %}<span class="badge badge-success badge-dot">OK</span>{% else %}<span class="badge badge-danger badge-dot">FAIL</span>{% endif %}</td>
+          </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+      {% else %}
+      <div class="table-empty">No calls recorded yet</div>
+      {% endif %}
+    </div>
   </div>
 
   {% if failures %}
-  <div class="section-title">Recent failures</div>
-  <div class="table-card">
-    <table>
-      <thead>
-        <tr>
-          <th>Timestamp</th>
-          <th>Type</th>
-          <th>Job ID</th>
-          <th>Error</th>
-        </tr>
-      </thead>
-      <tbody>
+  <div class="section">
+    <div class="panel" style="border-color:var(--danger-bd)">
+      <div class="panel-head" style="background:var(--danger-bg)"><h2 class="h2" style="color:var(--danger-fg)">Recent failures</h2><span class="dim" style="font-size:12.5px">Most recent first</span></div>
+      <table class="data">
+        <thead><tr><th>Timestamp</th><th>Type</th><th>Job ID</th><th>Error</th></tr></thead>
+        <tbody>
         {% for row in failures %}
-        <tr>
-          <td>{{ row[0] }}</td>
-          <td><span class="badge b-fail">{{ row[1] }}</span></td>
-          <td style="font-family:monospace;font-size:11px">{{ row[2][:16] if row[2] else '-' }}...</td>
-          <td style="color:#c0392b;font-size:12px">{{ row[3][:80] if row[3] else '-' }}</td>
-        </tr>
+          <tr>
+            <td class="ts">{{ row[0] }}</td>
+            <td><span class="badge {% if row[1] == 'score' %}badge-info{% elif row[1] == 'tailor' %}badge-warn{% endif %}">{{ row[1] }}</span></td>
+            <td class="mono" style="font-size:12.5px">{{ row[2][:16] }}...</td>
+            <td class="err-cell">{{ row[3][:80] }}</td>
+          </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
   {% endif %}
+</main>
 
-</div>
+<script>
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
+  var g=document.getElementById('theme-glyph'); if(g) g.textContent = t==='dark' ? '◑' : '◐';}
+function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  try{localStorage.setItem('ja-theme',t);}catch(e){} applyTheme(t);}
+try{applyTheme(localStorage.getItem('ja-theme')||'light');}catch(e){}
+
+
+</script>
 </body>
 </html>
