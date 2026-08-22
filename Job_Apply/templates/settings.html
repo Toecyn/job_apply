@@ -398,10 +398,10 @@ wireChipField('titles', 'titles-input', null);
 wireChipField('exclude', 'exclude-input', 'exclude');
 wireChipField('skills-chips', 'skills-input', 'skill');
 wireChipField('kw-chips', 'kw-input', null);
-// NOTE: "Core skills" chips are not their own profile column — they mirror
-// resume_json.technical_stack (the same field scorer.py reads as
-// profile['skills']). Editing them here is local-only for now; the source
-// of truth is whatever the resume upload/review flow saves.
+// "Core skills" chips are not their own profile column — they edit
+// resume_json.technical_stack directly (the same field scorer.py reads as
+// profile['skills']), via the dedicated /api/profile/resume/skills
+// endpoint the Save button calls below.
 
 /* ---------- search markets ---------- */
 function marketRow(location, mode, country) {
@@ -583,12 +583,40 @@ document.getElementById('save-btn').addEventListener('click', function(){
     stale_days: parseInt(document.getElementById('stale-days').value, 10) || 7,
     brand_color: getBrandColor()
   };
+  var skills = getChips('skills-chips');
+
   status.textContent = 'Saving…';
-  fetch('/api/profile', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  }).then(function(r){ return r.json(); }).then(function(data){
-    if (data.error) { status.textContent = 'Save failed: ' + data.error; return; }
+  var saves = [
+    fetch('/api/profile', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).then(function(r){ return r.json(); })
+  ];
+  // Core skills edit resume_json.technical_stack directly, via its own
+  // endpoint — only attempted when there's a resume to attach them to.
+  if (skills.length && latestDraft) {
+    saves.push(
+      fetch('/api/profile/resume/skills', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ technical_stack: skills })
+      }).then(function(r){ return r.json(); })
+    );
+  }
+
+  Promise.all(saves).then(function(results){
+    var profileResult = results[0];
+    var skillsResult = results[1];
+    if (profileResult && profileResult.error) {
+      status.textContent = 'Save failed: ' + profileResult.error;
+      return;
+    }
+    if (skillsResult && skillsResult.error) {
+      status.textContent = 'Saved, but skills didn’t save: ' + skillsResult.error;
+      return;
+    }
+    if (skillsResult && skillsResult.success && latestDraft) {
+      latestDraft = Object.assign({}, latestDraft, { technical_stack: skills });
+    }
     status.innerHTML = 'Saved just now <b>·</b> next scrape uses these settings';
   }).catch(function(){ status.textContent = 'Save failed — try again.'; });
 });

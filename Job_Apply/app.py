@@ -602,6 +602,30 @@ def api_profile_resume_confirm():
     return jsonify({"success": True})
 
 
+@app.route("/api/profile/resume/skills", methods=["POST"])
+def api_profile_resume_skills():
+    """Edits just resume_json.technical_stack — the Settings page's "Core
+    skills" chips aren't their own profile column, they're a view onto this
+    field (the same one scorer.py reads as profile['skills']). A dedicated,
+    merge-only endpoint so this can edit that one field without exposing
+    the rest of resume_json to a raw client overwrite the way a generic
+    PATCH would."""
+    from profile_store import get_profile, save_profile
+    data = request.json or {}
+    skills = data.get("technical_stack")
+    if not isinstance(skills, list):
+        return jsonify({"error": "technical_stack (a list) is required"}), 400
+
+    stored = get_profile()
+    if not stored or not stored.get("resume_json"):
+        return jsonify({"error": "No resume on file yet — upload one first."}), 400
+
+    resume = dict(stored["resume_json"])
+    resume["technical_stack"] = [s.strip() for s in skills if isinstance(s, str) and s.strip()]
+    save_profile({"resume_json": resume})
+    return jsonify({"success": True})
+
+
 if __name__ == "__main__":
     from scraper import init_db
     init_db()
