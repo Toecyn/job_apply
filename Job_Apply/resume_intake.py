@@ -144,7 +144,12 @@ Return only the JSON object, no other text."""
         job_id=None,
         model="claude-sonnet-5",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=4000,
+        # A full resume (several roles x several bullets, plus education/
+        # certifications) can run long, and Sonnet 5's default adaptive
+        # thinking eats into this budget too — 4000 was truncating output
+        # mid-string on real resumes ("Unterminated string..." from
+        # json.loads). 16000 is the safe non-streaming ceiling.
+        max_tokens=16000,
     )
     text = extract_response_text(response.content).strip()
     text = text.replace("```json", "").replace("```", "").strip()

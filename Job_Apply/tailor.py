@@ -272,7 +272,11 @@ Return ONLY this JSON:
             job_id=job_id,
             model='claude-sonnet-5',
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=4000
+            # Same reasoning as resume_intake.py's draft call — this covers
+            # every bullet across every role plus gate scores, and Sonnet
+            # 5's default thinking eats into the same budget. 4000 was
+            # truncating mid-string on real resumes.
+            max_tokens=16000
         )
         text = extract_text(response.content).strip()
         text = text.replace("```json", "").replace("```", "").strip()
