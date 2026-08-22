@@ -23,7 +23,9 @@ import re
 import tempfile
 
 from anthropic import Anthropic
-from ai_logger import call_claude_with_logging
+# Aliased — this module defines its own extract_text() below (PDF/docx ->
+# plain text) which would otherwise shadow this import of the same name.
+from ai_logger import call_claude_with_logging, extract_text as extract_response_text
 
 client = Anthropic()
 
@@ -144,7 +146,7 @@ Return only the JSON object, no other text."""
         messages=[{"role": "user", "content": prompt}],
         max_tokens=4000,
     )
-    text = response.content[0].text.strip()
+    text = extract_response_text(response.content).strip()
     text = text.replace("```json", "").replace("```", "").strip()
     draft = json.loads(text)
     return _backfill_ids(draft)

@@ -1,7 +1,7 @@
 import json
 import os
 from anthropic import Anthropic
-from ai_logger import call_claude_with_logging
+from ai_logger import call_claude_with_logging, extract_text
 from dotenv import load_dotenv
 from db import get_db
 from profile_store import get_profile as get_stored_profile
@@ -91,7 +91,7 @@ Return ONLY a JSON object with no other text:
             max_tokens=500
         )
 
-        text = response.content[0].text.strip()
+        text = extract_text(response.content).strip()
         text = text.replace("```json", "").replace("```", "").strip()
         result = json.loads(text)
 

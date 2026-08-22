@@ -334,7 +334,7 @@ def refine_skill_answer(skill_id):
         skill = next((s for s in data["skills"] if s["id"] == skill_id), None)
         if not skill:
             return jsonify({"error": "Skill not found"}), 404
-        from ai_logger import call_claude_with_logging
+        from ai_logger import call_claude_with_logging, extract_text
         from anthropic import Anthropic
         client = Anthropic()
         prompt = f"""You are a career coach helping a senior analytics professional prepare for enterprise AI operator roles.
@@ -356,7 +356,7 @@ Return only the refined answer, no preamble."""
             messages=[{"role": "user", "content": prompt}],
             max_tokens=300
         )
-        refined = response.content[0].text.strip()
+        refined = extract_text(response.content).strip()
         return jsonify({"refined": refined})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -386,7 +386,7 @@ def api_simulate_question():
             return jsonify({"error": "No data found"})
         skill = random.choice(skills)
         question_base = random.choice(skill["interview_questions"])
-        from ai_logger import call_claude_with_logging
+        from ai_logger import call_claude_with_logging, extract_text
         from anthropic import Anthropic
         client = Anthropic()
         prompt = f"""Reframe this interview question from the perspective of {company["name"]} hiring for {company["role"]}.
@@ -396,7 +396,7 @@ Return ONLY JSON: {{"question": "<reframed question>", "skill_id": "{skill["id"]
         response = call_claude_with_logging(client=client, call_type="simulate_question",
             job_id=company_id, model="claude-haiku-4-5-20251001",
             messages=[{"role": "user", "content": prompt}], max_tokens=400)
-        text = response.content[0].text.strip().replace("```json","").replace("```","").strip()
+        text = extract_text(response.content).strip().replace("```json","").replace("```","").strip()
         return jsonify(json.loads(text))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -419,7 +419,7 @@ def api_simulate_feedback():
             skill = next((s for s in data.get("skills", []) if s["id"] == skill_id), None)
             if skill:
                 skill_context = f"Candidate documented STAR answer: {skill['star_answer'][:300]}"
-        from ai_logger import call_claude_with_logging
+        from ai_logger import call_claude_with_logging, extract_text
         from anthropic import Anthropic
         client = Anthropic()
         prompt = f"""You are a senior interviewer at {company["name"]} for {company["role"]}.
@@ -433,7 +433,7 @@ Return ONLY JSON: {{"score": <int>, "verdict": "<one sentence>", "strong": "<wha
         response = call_claude_with_logging(client=client, call_type="simulate_feedback",
             job_id=company_id, model="claude-sonnet-5",
             messages=[{"role": "user", "content": prompt}], max_tokens=600)
-        text = response.content[0].text.strip().replace("```json","").replace("```","").strip()
+        text = extract_text(response.content).strip().replace("```json","").replace("```","").strip()
         return jsonify(json.loads(text))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -448,7 +448,7 @@ def api_simulate_harder():
     try:
         data = json.load(open("data/skills.json"))
         company = next((c for c in data.get("target_companies", []) if c["id"] == company_id), None)
-        from ai_logger import call_claude_with_logging
+        from ai_logger import call_claude_with_logging, extract_text
         from anthropic import Anthropic
         client = Anthropic()
         prompt = f"""Senior interviewer at {company["name"]} for {company["role"]}.
@@ -458,7 +458,7 @@ Return ONLY JSON: {{"question": "<harder question>"}}"""
         response = call_claude_with_logging(client=client, call_type="simulate_harder",
             job_id=company_id, model="claude-haiku-4-5-20251001",
             messages=[{"role": "user", "content": prompt}], max_tokens=200)
-        text = response.content[0].text.strip().replace("```json","").replace("```","").strip()
+        text = extract_text(response.content).strip().replace("```json","").replace("```","").strip()
         return jsonify(json.loads(text))
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -12,6 +12,7 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 from db import get_db
 from profile_store import get_profile as get_stored_profile
+from ai_logger import extract_text
 
 load_dotenv()
 
@@ -175,7 +176,7 @@ def collect_results(batch_id):
             continue
         if result.result.type == "succeeded":
             try:
-                text = result.result.message.content[0].text
+                text = extract_text(result.result.message.content)
                 text = text.replace("```json", "").replace("```", "").strip()
                 data = json.loads(text)
                 conn.execute(

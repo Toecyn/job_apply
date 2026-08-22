@@ -19,6 +19,23 @@ DEFAULT_INPUT_PRICE  = 0.000003
 DEFAULT_OUTPUT_PRICE = 0.000015
 
 
+def extract_text(content_blocks):
+    """response.content is a list of content blocks (TextBlock, ThinkingBlock,
+    ToolUseBlock, ...), not always text-first. Current models run thinking by
+    default — e.g. Sonnet 5 runs adaptive thinking even with `thinking`
+    omitted from the request — so content[0] is frequently a ThinkingBlock,
+    and `response.content[0].text` raises AttributeError on it. Pull the
+    first actual text block instead of assuming position 0.
+
+    Every call site in this app expects exactly one text block per response
+    (none currently request tool use or multiple text blocks), so returning
+    just the first one preserves existing behavior."""
+    for block in content_blocks:
+        if getattr(block, "type", None) == "text":
+            return block.text
+    return ""
+
+
 def log_ai_call(call_type, job_id, model, prompt_tokens, completion_tokens,
                 latency_ms, success, error_text=None, output_preview=None):
 
@@ -66,7 +83,7 @@ def call_claude_with_logging(client, call_type, job_id, model, messages, max_tok
             latency_ms = int((time.time() - start) * 1000)
             prompt_tokens = response.usage.input_tokens
             completion_tokens = response.usage.output_tokens
-            output_text = response.content[0].text
+            output_text = extract_text(response.content)
 
             log_ai_call(
                 call_type=call_type, job_id=job_id, model=model,
