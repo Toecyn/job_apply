@@ -75,6 +75,16 @@ def save_profile(fields):
     for field in JSON_FIELDS:
         if field in payload and payload[field] is not None:
             payload[field] = json.dumps(payload[field])
+    # open_to_remote / visa_required are INTEGER columns (matching
+    # jobs.is_remote / jobs.visa_required's existing 0/1 convention in this
+    # schema), but settings.html sends real JSON booleans from checkbox
+    # state. psycopg2 adapts a Python bool to SQL boolean, not integer, and
+    # Postgres refuses that against an INTEGER column outright ("column is
+    # of type integer but expression is of type boolean") — coerce
+    # generically so any future boolean field doesn't hit the same trap.
+    for key, value in payload.items():
+        if isinstance(value, bool):
+            payload[key] = int(value)
     payload["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     columns = list(payload.keys())

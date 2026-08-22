@@ -541,8 +541,11 @@ def settings():
 
 @app.route("/api/profile", methods=["GET"])
 def api_get_profile():
-    from profile_store import get_profile
-    return jsonify(get_profile() or {})
+    try:
+        from profile_store import get_profile
+        return jsonify(get_profile() or {})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/profile", methods=["POST"])
@@ -552,8 +555,11 @@ def api_save_profile():
     fields = {k: v for k, v in data.items() if k in SETTINGS_FIELDS}
     if not fields:
         return jsonify({"error": "No recognized profile fields in request"}), 400
-    save_profile(fields)
-    return jsonify({"success": True})
+    try:
+        save_profile(fields)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/profile/resume/extract", methods=["POST"])
@@ -610,8 +616,11 @@ def api_profile_resume_confirm():
     resume_json = data.get("resume_json")
     if not resume_json:
         return jsonify({"error": "resume_json required"}), 400
-    save_profile({"resume_json": resume_json})
-    return jsonify({"success": True})
+    try:
+        save_profile({"resume_json": resume_json})
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/profile/resume/skills", methods=["POST"])
@@ -628,14 +637,17 @@ def api_profile_resume_skills():
     if not isinstance(skills, list):
         return jsonify({"error": "technical_stack (a list) is required"}), 400
 
-    stored = get_profile()
-    if not stored or not stored.get("resume_json"):
-        return jsonify({"error": "No resume on file yet — upload one first."}), 400
+    try:
+        stored = get_profile()
+        if not stored or not stored.get("resume_json"):
+            return jsonify({"error": "No resume on file yet — upload one first."}), 400
 
-    resume = dict(stored["resume_json"])
-    resume["technical_stack"] = [s.strip() for s in skills if isinstance(s, str) and s.strip()]
-    save_profile({"resume_json": resume})
-    return jsonify({"success": True})
+        resume = dict(stored["resume_json"])
+        resume["technical_stack"] = [s.strip() for s in skills if isinstance(s, str) and s.strip()]
+        save_profile({"resume_json": resume})
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
