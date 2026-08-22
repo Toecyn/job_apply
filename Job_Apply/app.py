@@ -1,5 +1,6 @@
 import json
 import os
+from urllib.parse import quote
 from flask import Flask, render_template, jsonify, request, redirect
 from dotenv import load_dotenv
 from db import get_db, init_db
@@ -96,7 +97,10 @@ def index():
     stats = get_stats_data()
     return render_template("index.html",
         jobs=jobs, stats=stats,
-        filters={"status": status, "market": market, "min_score": min_score, "fresh_hours": fresh_hours}
+        filters={"status": status, "market": market, "min_score": min_score, "fresh_hours": fresh_hours},
+        refresh_ok=request.args.get("refresh_ok"),
+        refresh_scored=request.args.get("refresh_scored"),
+        refresh_error=request.args.get("refresh_error"),
     )
 
 
@@ -130,18 +134,26 @@ def update_status(job_id):
 
 @app.route("/refresh", methods=["POST"])
 def refresh():
+    """Was silently swallowing every failure here — a missing dependency,
+    a scrape timeout, an unconfigured profile, anything — and just
+    redirecting back to a page that looked unchanged, with the real reason
+    only ever reaching the server log. Now passes a status message through
+    as a query param so index.html can actually show what happened."""
+    scored = 0
     try:
         from scraper import run_scrape
         new_jobs = run_scrape()
         if new_jobs > 0:
             try:
                 from scorer import score_all_unscored
-                score_all_unscored()
+                scored = score_all_unscored()
             except Exception as e:
                 print(f"Scoring error: {e}")
+                return redirect(f"/?refresh_ok={new_jobs}&refresh_scored={scored}&refresh_error={quote(f'Found {new_jobs} jobs but scoring failed: {e}')}")
+        return redirect(f"/?refresh_ok={new_jobs}&refresh_scored={scored}")
     except Exception as e:
         print(f"Refresh error: {e}")
-    return redirect("/")
+        return redirect(f"/?refresh_error={quote(str(e))}")
 
 
 @app.route("/tailor/<job_id>", methods=["POST"])
