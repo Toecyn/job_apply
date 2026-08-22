@@ -598,6 +598,15 @@ function loadProfile() {
       document.getElementById('resume-filename').textContent = p.resume_filename;
       document.getElementById('resume-meta-sub').textContent = 'File uploaded but not yet confirmed — upload it again to review and save';
     }
+
+    // The "Not saved yet..." text in the HTML is only ever a fallback for
+    // a brand-new, never-saved profile — it was previously left as-is on
+    // every page load regardless of whether a save had actually happened,
+    // which read as "your save didn't take" even when it had.
+    var status = document.getElementById('save-status');
+    if (p.updated_at) {
+      status.innerHTML = 'Last saved ' + escHtml(p.updated_at) + ' <b>·</b> loaded from your saved profile';
+    }
   }).catch(function(e){ console.log('Could not load profile:', e); });
 }
 loadProfile();
