@@ -1,6 +1,7 @@
 import json
 import os
 from urllib.parse import quote
+import requests
 from flask import Flask, render_template, jsonify, request, redirect
 from dotenv import load_dotenv
 from db import get_db, init_db
@@ -8,6 +9,35 @@ from db import get_db, init_db
 load_dotenv()
 
 app = Flask(__name__)
+
+# The workflow that actually performs the scrape (see .github/workflows/scrape.yml)
+# lives on this branch — dispatch has to name the branch/tag the workflow file
+# is registered on, not just any ref.
+GITHUB_REPO = "Toecyn/job_apply"
+GITHUB_SCRAPE_REF = "claude/hopeful-lovelace-c1aekc"
+GITHUB_SCRAPE_WORKFLOW = "scrape.yml"
+
+
+def trigger_scrape_workflow():
+    """Fire the GitHub Actions scrape workflow instead of scraping in-process.
+
+    Live Indeed/LinkedIn scraping across every configured market routinely
+    takes minutes — running it inside this request reliably blew past
+    Vercel's serverless function timeout (confirmed in runtime logs: even a
+    single market's scrape didn't finish in 60s). GitHub Actions has no such
+    limit, and writes to the same Postgres database this app reads from, so
+    the dashboard just needs to be reloaded once the run finishes.
+    """
+    token = os.environ["GITHUB_DISPATCH_TOKEN"]
+    resp = requests.post(
+        f"https://api.github.com/repos/{GITHUB_REPO}/actions/workflows/{GITHUB_SCRAPE_WORKFLOW}/dispatches",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
+        json={"ref": GITHUB_SCRAPE_REF},
+        timeout=10,
+    )
+    if resp.status_code != 204:
+        raise RuntimeError(f"GitHub returned {resp.status_code}: {resp.text[:200]}")
+
 
 # Ensure the schema (including the profile table) exists before any route
 # runs. Previously this only ran as a side effect of a scrape, or in the
@@ -98,8 +128,7 @@ def index():
     return render_template("index.html",
         jobs=jobs, stats=stats,
         filters={"status": status, "market": market, "min_score": min_score, "fresh_hours": fresh_hours},
-        refresh_ok=request.args.get("refresh_ok"),
-        refresh_scored=request.args.get("refresh_scored"),
+        refresh_queued=request.args.get("refresh_queued"),
         refresh_error=request.args.get("refresh_error"),
     )
 
@@ -134,25 +163,11 @@ def update_status(job_id):
 
 @app.route("/refresh", methods=["POST"])
 def refresh():
-    """Was silently swallowing every failure here — a missing dependency,
-    a scrape timeout, an unconfigured profile, anything — and just
-    redirecting back to a page that looked unchanged, with the real reason
-    only ever reaching the server log. Now passes a status message through
-    as a query param so index.html can actually show what happened."""
-    scored = 0
     try:
-        from scraper import run_scrape
-        new_jobs = run_scrape()
-        if new_jobs > 0:
-            try:
-                from scorer import score_all_unscored
-                scored = score_all_unscored()
-            except Exception as e:
-                print(f"Scoring error: {e}")
-                return redirect(f"/?refresh_ok={new_jobs}&refresh_scored={scored}&refresh_error={quote(f'Found {new_jobs} jobs but scoring failed: {e}')}")
-        return redirect(f"/?refresh_ok={new_jobs}&refresh_scored={scored}")
+        trigger_scrape_workflow()
+        return redirect("/?refresh_queued=1")
     except Exception as e:
-        print(f"Refresh error: {e}")
+        print(f"Refresh trigger error: {e}")
         return redirect(f"/?refresh_error={quote(str(e))}")
 
 
@@ -270,49 +285,11 @@ def api_reuse_resume(job_id):
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/refresh/scrape", methods=["POST"])
-def api_refresh_scrape():
-    """Scrape exactly one market (index `i`, 0-based). One request per market
-    instead of one request for the whole profile — a full scrape across every
-    market plus scoring was blowing past Vercel's 60s function timeout every
-    time (confirmed in runtime logs: it never even finished market 1 of 3).
-    The dashboard's Refresh Jobs button calls this once per configured market."""
-    try:
-        i = int(request.args.get("i", 0))
-        from scraper import run_scrape_market
-        return jsonify(run_scrape_market(i))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/refresh/score", methods=["POST"])
-def api_refresh_score():
-    """Score up to `limit` unscored jobs (one live Claude call each) and
-    report how many are still left, so the dashboard can keep calling this
-    in a loop instead of one unbounded call that can time out mid-batch."""
-    try:
-        limit = int(request.args.get("limit", 12))
-        from scorer import score_all_unscored, count_unscored
-        scored = score_all_unscored(limit=limit)
-        remaining = count_unscored()
-        return jsonify({"scored": scored, "remaining": remaining})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
 @app.route("/api/refresh", methods=["POST"])
 def api_refresh():
     try:
-        from scraper import run_scrape
-        new_jobs = run_scrape()
-        scored = 0
-        if new_jobs > 0:
-            try:
-                from scorer import score_all_unscored
-                scored = score_all_unscored()
-            except Exception as e:
-                print(f"Scoring error: {e}")
-        return jsonify({"success": True, "new_jobs": new_jobs, "scored": scored})
+        trigger_scrape_workflow()
+        return jsonify({"queued": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

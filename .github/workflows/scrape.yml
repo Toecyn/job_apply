@@ -1,0 +1,38 @@
+name: Scrape jobs
+
+# Runs the job scrape + scoring pipeline here instead of inside the
+# Vercel-hosted dashboard — live Indeed/LinkedIn scraping across every
+# configured market routinely takes several minutes, well past Vercel's
+# serverless function timeout. The dashboard's "Refresh Jobs" button just
+# dispatches this workflow (see app.py) and lets it run to completion here;
+# both write to the same Postgres database.
+#
+# Schedule times are approximate America/Toronto local time (UTC-5, standard
+# time) matching the cadence scraper.py/scheduler.py were originally tuned
+# for: 7:30am, 10:00am, 4:00pm, 8:00pm. Adjust the cron expressions if that's
+# not the right timezone.
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "30 12 * * *"
+    - cron: "0 15 * * *"
+    - cron: "0 21 * * *"
+    - cron: "0 1 * * *"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: Job_Apply
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python cron_scrape.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

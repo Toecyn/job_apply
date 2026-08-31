@@ -163,15 +163,13 @@ def mark_stale_jobs():
         print(f"  Marked {stale} jobs as stale (older than 7 days)")
 
 def run_scrape_market(market_index):
-    """Scrape exactly one configured market and save its results.
-
-    Vercel's function timeout (60s even after the maxDuration fix) is not
-    enough to scrape every market plus score every job in one request —
-    runtime logs showed /refresh timing out mid-way through market 1 of 3,
-    every time. Splitting the scrape into one-market-per-request calls
-    (driven by the dashboard's Refresh Jobs button in app.py) keeps each
-    request well inside the limit. init_db()/mark_stale_jobs() are cheap
-    and idempotent, so running them on every call is fine.
+    """Scrape exactly one configured market and save its results. Called in a
+    loop by run_scrape() (from cron_scrape.py/scheduler.py) rather than
+    directly from the dashboard — Vercel's function timeout made a
+    dashboard-driven per-market request unreliable even at this granularity
+    (a single market's live Indeed/LinkedIn scrape could still exceed 60s).
+    init_db()/mark_stale_jobs() are cheap and idempotent, so running them on
+    every call is fine.
 
     Returns a dict describing what happened; total_markets/market_index
     let the caller know whether to request the next index.
@@ -222,9 +220,10 @@ def run_scrape_market(market_index):
 
 
 def run_scrape():
-    """Scrape every configured market in one call. Fine for a local/background
-    process (scheduler.py) that isn't bound by Vercel's request timeout — the
-    live dashboard drives run_scrape_market() one market at a time instead."""
+    """Scrape every configured market in one call. Only called from cron_scrape.py
+    (the GitHub Actions scrape workflow) or scheduler.py — both are background
+    processes with no request timeout, unlike the Vercel-hosted dashboard, which
+    only ever dispatches that workflow and reads what it wrote."""
     print("\n" + "="*50)
     print(f"Job scrape started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*50)
