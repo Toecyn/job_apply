@@ -476,7 +476,10 @@ Score 0-100 where 80+ is strong hire signal.
 Return ONLY JSON: {{"score": <int>, "verdict": "<one sentence>", "strong": "<what was strong>", "improve": "<what was missing>", "model_answer": "<3-4 sentence model answer>"}}"""
         response = call_claude_with_logging(client=client, call_type="simulate_feedback",
             job_id=company_id, model="claude-sonnet-5",
-            messages=[{"role": "user", "content": prompt}], max_tokens=600)
+            # Sonnet 5's default thinking eats into this same budget regardless
+            # of the JSON schema's size — see tailor.py's run_intake/tailor_for_job
+            # for the "Unterminated string" truncation this caused at lower caps.
+            messages=[{"role": "user", "content": prompt}], max_tokens=16000)
         text = extract_text(response.content).strip().replace("```json","").replace("```","").strip()
         return jsonify(json.loads(text))
     except Exception as e:

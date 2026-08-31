@@ -153,7 +153,10 @@ Return ONLY this JSON with no other text:
             job_id=job_id,
             model='claude-sonnet-5',
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=1500
+            # Same reasoning as tailor_for_job()/resume_intake.py's draft call —
+            # Sonnet 5's default thinking eats into this same budget regardless
+            # of how small the JSON schema looks. 1500 was truncating mid-string.
+            max_tokens=16000
         )
         text = extract_text(response.content).strip()
         text = text.replace("```json", "").replace("```", "").strip()
