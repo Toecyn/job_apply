@@ -10,12 +10,28 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# The workflow that actually performs the scrape (see .github/workflows/scrape.yml)
-# lives on this branch — dispatch has to name the branch/tag the workflow file
-# is registered on, not just any ref.
+# Workflows that offload slow work from Vercel's serverless timeout onto
+# GitHub Actions (see .github/workflows/*.yml). Dispatch has to name the
+# branch/tag the workflow file is registered on — that file also has to
+# exist on the repo's default branch (main) or GitHub's dispatch-by-filename
+# lookup 404s, even though the run itself executes GITHUB_SCRAPE_REF's code.
 GITHUB_REPO = "Toecyn/job_apply"
 GITHUB_SCRAPE_REF = "claude/hopeful-lovelace-c1aekc"
-GITHUB_SCRAPE_WORKFLOW = "scrape.yml"
+
+
+def dispatch_workflow(workflow_file, inputs=None):
+    """POST a workflow_dispatch event to GitHub Actions and return once it's
+    queued — this only takes ~1s regardless of how long the workflow itself
+    runs, so it's safe to call directly from a Vercel request handler."""
+    token = os.environ["GITHUB_DISPATCH_TOKEN"]
+    resp = requests.post(
+        f"https://api.github.com/repos/{GITHUB_REPO}/actions/workflows/{workflow_file}/dispatches",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
+        json={"ref": GITHUB_SCRAPE_REF, "inputs": inputs or {}},
+        timeout=10,
+    )
+    if resp.status_code != 204:
+        raise RuntimeError(f"GitHub returned {resp.status_code}: {resp.text[:200]}")
 
 
 def trigger_scrape_workflow():
@@ -28,15 +44,7 @@ def trigger_scrape_workflow():
     limit, and writes to the same Postgres database this app reads from, so
     the dashboard just needs to be reloaded once the run finishes.
     """
-    token = os.environ["GITHUB_DISPATCH_TOKEN"]
-    resp = requests.post(
-        f"https://api.github.com/repos/{GITHUB_REPO}/actions/workflows/{GITHUB_SCRAPE_WORKFLOW}/dispatches",
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
-        json={"ref": GITHUB_SCRAPE_REF},
-        timeout=10,
-    )
-    if resp.status_code != 204:
-        raise RuntimeError(f"GitHub returned {resp.status_code}: {resp.text[:200]}")
+    dispatch_workflow("scrape.yml")
 
 
 # Ensure the schema (including the profile table) exists before any route
@@ -305,23 +313,37 @@ def job_intake(job_id):
 
 @app.route("/api/jobs/<job_id>/tailor", methods=["POST"])
 def api_tailor(job_id):
+    """Dispatches the tailor workflow instead of generating the resume here —
+    the Claude call plus the Node docx build plus the Blob upload reliably
+    exceed Vercel's 60s Hobby-plan timeout (confirmed in production). The
+    dashboard polls /api/jobs/<id>/tailor-status for the result."""
+    data = request.json or {}
+    intake_answers = data.get("intake_answers") or {}
     try:
-        from tailor import tailor_for_job, build_tailored_docx
-        data = request.json or {}
-        intake_answers = data.get("intake_answers", None)
-        result = tailor_for_job(job_id, intake_answers=intake_answers)
-        if "error" in result:
-            return jsonify(result), 500
-        docx_result = build_tailored_docx(result)
-        if docx_result.get("success"):
-            conn = get_db()
-            conn.execute("UPDATE jobs SET resume_path = %s WHERE id = %s", (docx_result["path"], job_id))
-            conn.commit()
-            conn.close()
-        result["docx"] = docx_result
-        return jsonify(result)
+        conn = get_db()
+        conn.execute(
+            "UPDATE jobs SET tailor_result = %s WHERE id = %s",
+            (json.dumps({"status": "pending"}), job_id),
+        )
+        conn.commit()
+        conn.close()
+        dispatch_workflow("tailor.yml", inputs={
+            "job_id": job_id,
+            "intake_answers": json.dumps(intake_answers),
+        })
+        return jsonify({"queued": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/jobs/<job_id>/tailor-status")
+def api_tailor_status(job_id):
+    conn = get_db()
+    row = conn.execute("SELECT tailor_result FROM jobs WHERE id = %s", (job_id,)).fetchone()
+    conn.close()
+    if not row or not row["tailor_result"]:
+        return jsonify({"status": None})
+    return jsonify(json.loads(row["tailor_result"]))
 
 
 

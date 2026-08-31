@@ -85,6 +85,15 @@ CREATE TABLE IF NOT EXISTS profile (
 -- against, even before anyone has visited /settings.
 INSERT INTO profile (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
+-- Generating a tailored resume (Claude call + docx build + blob upload) runs
+-- too long for Vercel's serverless timeout, so it now runs in a GitHub
+-- Actions workflow (see .github/workflows/tailor.yml / cron_tailor.py)
+-- dispatched by /api/jobs/<id>/tailor, with the dashboard polling
+-- /api/jobs/<id>/tailor-status for this column: JSON like
+-- {"status": "pending"} while running, {"status": "done", ...result} or
+-- {"status": "error", "error": "..."} once the workflow finishes.
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS tailor_result TEXT DEFAULT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_jobs_is_stale ON jobs (is_stale);
 CREATE INDEX IF NOT EXISTS idx_jobs_score ON jobs (score);
 CREATE INDEX IF NOT EXISTS idx_jobs_search_pass ON jobs (search_pass);

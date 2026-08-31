@@ -1,0 +1,43 @@
+name: Tailor resume
+
+# Generates one tailored resume per run — dispatched by app.py's
+# /api/jobs/<id>/tailor instead of doing the work inline, because the
+# Claude call (max_tokens=16000) plus the Node docx build plus the Blob
+# upload reliably exceed Vercel's Hobby-plan 60s function timeout.
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: Job ID to generate a tailored resume for
+        required: true
+        type: string
+      intake_answers:
+        description: JSON-encoded intake answers ("{}" if none)
+        required: false
+        type: string
+        default: "{}"
+
+jobs:
+  tailor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: Job_Apply
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install -r requirements.txt
+      - run: npm install
+      - run: python cron_tailor.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          TAILOR_JOB_ID: ${{ inputs.job_id }}
+          TAILOR_INTAKE_ANSWERS: ${{ inputs.intake_answers }}

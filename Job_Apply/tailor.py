@@ -518,9 +518,13 @@ def build_tailored_docx(review_data):
     with open(temp_path, "w") as f:
         json.dump(tailored_resume, f, indent=2)
 
+    # Plain "node" (resolved via PATH) rather than a hardcoded interpreter
+    # path — this now runs from the GitHub Actions tailor workflow (see
+    # cron_tailor.py), not Vercel, so a path specific to Vercel's runtime
+    # would no longer resolve.
     build_script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build_docx.js")
     result = subprocess.run(
-        ["/usr/local/bin/node", build_script_path, temp_path, output_path],
+        ["node", build_script_path, temp_path, output_path],
         capture_output=True, text=True,
         cwd=os.path.dirname(os.path.abspath(__file__))
     )

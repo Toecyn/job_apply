@@ -665,45 +665,73 @@ function generateResume(){
   var btn=document.getElementById('btn-generate');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Generating…';
   document.getElementById('intake-body').innerHTML=
-    '<div class="loading-state"><span class="spinner"></span><p>Tailoring your resume</p><small>About 15 seconds</small></div>';
+    '<div class="loading-state"><span class="spinner"></span><p>Tailoring your resume</p><small>Runs in the background — usually 1-3 minutes</small></div>';
   fetch('/api/jobs/'+jobId+'/tailor',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({intake_answers:collectAnswers()})})
   .then(function(r){return r.json();})
   .then(function(d){
-    btn.disabled=false; btn.textContent='Generate Resume';
-    if(d.error){document.getElementById('intake-body').innerHTML='<div class="notice notice-err">'+d.error+'</div>';return;}
-    var h='<div class="notice notice-ok">Saved as <strong>'+(d.filename||d.resume_path||'resume')+'</strong></div>';
-    if(d.jd_narrative) h+='<div style="margin-top:16px"><div class="eyebrow">JD narrative</div><p class="muted">'+d.jd_narrative+'</p></div>';
-    if(d.gate_scores){
-      h+='<div style="margin-top:16px"><div class="eyebrow">Gate scores</div><div class="gate-grid">'+
-         '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
-         '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
-         '<div class="gate"><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div><div class="l">Hiring manager</div></div>'+
-         '</div></div>';
+    if(d.error){
+      btn.disabled=false; btn.textContent='Generate Resume';
+      document.getElementById('intake-body').innerHTML='<div class="notice notice-err">'+d.error+'</div>';
+      return;
     }
-    if(d.gaps && d.gaps.length){
-      h+='<div class="reasons gaps" style="margin-top:16px"><div class="eyebrow">Gaps</div><ul>';
-      d.gaps.forEach(function(g){h+='<li>'+g+'</li>';}); h+='</ul></div>';
-    }
-    document.getElementById('intake-body').innerHTML=h;
-
-    var inp=document.getElementById('resume-path-'+jobId);
-    if(inp && (d.resume_path||d.filename)) inp.value=d.resume_path||d.filename;
-    var res=document.getElementById('tailor-result-'+jobId);
-    if(res){
-      res.classList.add('show');
-      res.innerHTML='<div class="eyebrow">Tailored resume</div><div style="margin-top:4px"><strong>'+(d.filename||d.resume_path)+'</strong></div>'+
-        (d.gate_scores ? '<div class="gate-grid">'+
-          '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
-          '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
-          '<div class="gate"><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div><div class="l">Hiring mgr</div></div>'+
-        '</div>' : '');
-    }
+    pollTailorStatus(jobId, btn);
   })
   .catch(function(e){
     btn.disabled=false; btn.textContent='Generate Resume';
     document.getElementById('intake-body').innerHTML='<div class="notice notice-err">'+e+'</div>';
   });
+}
+
+/* Tailoring runs as a background GitHub Actions workflow (see app.py's
+   /api/jobs/<id>/tailor) instead of inline — it reliably blew past Vercel's
+   60s timeout. Poll for the result instead of awaiting one request. */
+function pollTailorStatus(jobId, btn){
+  fetch('/api/jobs/'+jobId+'/tailor-status')
+    .then(function(r){return r.json();})
+    .catch(function(){return {status:'pending'};})
+    .then(function(d){
+      if(!d || !d.status || d.status==='pending'){
+        setTimeout(function(){ pollTailorStatus(jobId, btn); }, 4000);
+        return;
+      }
+      btn.disabled=false; btn.textContent='Generate Resume';
+      if(d.status==='error'){
+        document.getElementById('intake-body').innerHTML='<div class="notice notice-err">'+d.error+'</div>';
+        return;
+      }
+      renderTailorResult(jobId, d);
+    });
+}
+
+function renderTailorResult(jobId, d){
+  var h='<div class="notice notice-ok">Saved as <strong>'+(d.filename||d.resume_path||'resume')+'</strong></div>';
+  if(d.jd_narrative) h+='<div style="margin-top:16px"><div class="eyebrow">JD narrative</div><p class="muted">'+d.jd_narrative+'</p></div>';
+  if(d.gate_scores){
+    h+='<div style="margin-top:16px"><div class="eyebrow">Gate scores</div><div class="gate-grid">'+
+       '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
+       '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
+       '<div class="gate"><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div><div class="l">Hiring manager</div></div>'+
+       '</div></div>';
+  }
+  if(d.gaps && d.gaps.length){
+    h+='<div class="reasons gaps" style="margin-top:16px"><div class="eyebrow">Gaps</div><ul>';
+    d.gaps.forEach(function(g){h+='<li>'+g+'</li>';}); h+='</ul></div>';
+  }
+  document.getElementById('intake-body').innerHTML=h;
+
+  var inp=document.getElementById('resume-path-'+jobId);
+  if(inp && (d.resume_path||d.filename)) inp.value=d.resume_path||d.filename;
+  var res=document.getElementById('tailor-result-'+jobId);
+  if(res){
+    res.classList.add('show');
+    res.innerHTML='<div class="eyebrow">Tailored resume</div><div style="margin-top:4px"><strong>'+(d.filename||d.resume_path)+'</strong></div>'+
+      (d.gate_scores ? '<div class="gate-grid">'+
+        '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
+        '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
+        '<div class="gate"><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div><div class="l">Hiring mgr</div></div>'+
+      '</div>' : '');
+  }
 }
 
 document.addEventListener('keydown',function(e){
