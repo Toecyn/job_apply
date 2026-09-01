@@ -11,13 +11,17 @@ automatically once Blob storage is attached to the project (Storage tab
 in the Vercel dashboard → Create Database → Blob); it's also picked up
 locally via .env for `vercel env pull`.
 
-NOTE: this implements Vercel Blob's documented raw-HTTP upload contract
-(no @vercel/blob JS SDK dependency, since this is a Python codebase).
-Outbound network access to vercel.com was blocked in the environment this
-was written in, so the exact header/response shape below could not be
-verified live against current docs — smoke-test upload()/delete() against
-a real BLOB_READ_WRITE_TOKEN before relying on this in production, and
-check https://vercel.com/docs/vercel-blob if it doesn't work first try.
+NOTE: Vercel only documents the @vercel/blob JS SDK — there is no official
+raw-HTTP spec for other languages. This implements the SDK's actual wire
+protocol (pathname as a query param, x-api-version/access headers), cross-
+checked against community reimplementations (e.g.
+github.com/SuryaSekhar14/vercel_blob) after an earlier version of this file
+guessed a plausible-looking but wrong shape (path as a URL segment, no
+x-api-version/access headers) and every upload silently failed and fell
+back to a useless local /tmp path with no one noticing until a resume
+"finished" with a dead download link. If uploads start failing again after
+a Vercel Blob API change, check that project's source for the current
+x-api-version value first.
 """
 import os
 import requests
@@ -41,12 +45,26 @@ def upload(path: str, data: bytes, content_type: str) -> str:
 
     A random suffix is added to the path so re-uploading a resume with the
     same filename never collides with or silently overwrites a prior one.
+
+    Verified against the @vercel/blob SDK's actual wire protocol (not
+    documented for raw HTTP use — Vercel only publishes the JS SDK — so
+    cross-checked against community reimplementations, e.g.
+    github.com/SuryaSekhar14/vercel_blob): the pathname is a query param,
+    not a URL path segment, and x-api-version/access are both required
+    headers. The original version of this function got both wrong and
+    every upload was silently failing and falling back to the local /tmp
+    path (see build_tailored_docx()), which doesn't survive past one
+    request/one CI job — so every "successful" tailor never actually
+    produced a working download link.
     """
     resp = requests.put(
-        f"{BLOB_API}/{path.lstrip('/')}",
+        f"{BLOB_API}/",
+        params={"pathname": path.lstrip("/")},
         data=data,
         headers={
             "authorization": f"Bearer {_token()}",
+            "x-api-version": "10",
+            "access": "public",
             "x-content-type": content_type,
             "x-add-random-suffix": "1",
         },
@@ -63,7 +81,10 @@ def delete(url: str):
         resp = requests.post(
             f"{BLOB_API}/delete",
             json={"urls": [url]},
-            headers={"authorization": f"Bearer {_token()}"},
+            headers={
+                "authorization": f"Bearer {_token()}",
+                "x-api-version": "10",
+            },
             timeout=15,
         )
         resp.raise_for_status()
