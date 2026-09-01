@@ -97,6 +97,18 @@ h1,h2,h3,h4{margin:0;letter-spacing:-.018em;font-weight:600}
 .icon-btn{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);
   display:grid;place-items:center;cursor:pointer;color:var(--text-2);transition:.15s var(--ease)}
 .icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.nav-toggle{display:none}
+@media(max-width:720px){
+  .appbar-inner{position:relative}
+  .nav-toggle{display:grid}
+  .nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;
+    gap:0;overflow-x:visible;background:var(--surface);border-bottom:1px solid var(--border);
+    padding:var(--sp-2) var(--sp-4);box-shadow:var(--shadow-md)}
+  .nav.open{display:flex}
+  .nav-link{padding:10px 4px}
+  .appbar-inner{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:10px}
+  .appbar-actions{width:100%;justify-content:flex-end}
+}
 
 /* ---------- layout ---------- */
 .page{max-width:1180px;margin:0 auto;padding:var(--sp-8) var(--sp-6) 96px}
@@ -209,10 +221,18 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
 .result-box{display:none;margin-top:var(--sp-4);border:1px solid var(--info-bd);background:var(--info-bg);
   border-radius:var(--r-md);padding:var(--sp-4);animation:fadeUp .22s var(--ease)}
 .result-box.show{display:block}
+/* Each gate score is a full explanatory sentence from Claude (e.g. "9/10 —
+   heavy overlap with JD phrases…"), not a bare number — .n used to be
+   styled like a giant KPI figure sized for "8/10" and overflowed badly
+   once real content (and narrow mobile columns) hit it. min-width:0 is
+   needed because grid items default to min-width:auto, which ignores
+   1fr and lets long unbreakable text force the column wider than its
+   share of the row regardless of font size. */
 .gate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-3)}
-.gate{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;text-align:center}
-.gate .n{font-family:var(--font-mono);font-size:20px;font-weight:600}
-.gate .l{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);font-weight:600}
+.gate{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;text-align:left;min-width:0}
+.gate .l{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);font-weight:600;margin-bottom:4px}
+.gate .n{font-size:12.5px;font-weight:400;line-height:1.5;color:var(--text-2);overflow-wrap:break-word}
+@media(max-width:640px){.gate-grid{grid-template-columns:1fr}}
 
 .followup{margin-top:var(--sp-4)}
 .fu-panel{border:1px dashed var(--border-strong);border-radius:var(--r-md);padding:var(--sp-4);background:var(--surface-2);
@@ -256,7 +276,8 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
 <header class="appbar">
   <div class="appbar-inner">
     <a class="brand" href="/"><span class="brand-mark">JA</span><span class="brand-text">Job Apply</span></a>
-    <nav class="nav">
+    <button class="icon-btn nav-toggle" type="button" onclick="toggleNav()" aria-label="Toggle menu">☰</button>
+    <nav class="nav" id="main-nav">
       <a class="nav-link active" href="/">Dashboard</a>
       <a class="nav-link" href="/governance">Governance</a>
       <a class="nav-link" href="/skills">Skills</a>
@@ -451,9 +472,9 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
       <div style="margin-top:4px"><a href="{{ job.tailor_result.resume_path }}" target="_blank" rel="noopener"><strong>{{ job.tailor_result.filename or job.tailor_result.resume_path }}</strong></a></div>
       {% if job.tailor_result.gate_scores %}
       <div class="gate-grid">
-        <div class="gate"><div class="n">{{ job.tailor_result.gate_scores.ats if job.tailor_result.gate_scores.ats is not none else '—' }}</div><div class="l">ATS</div></div>
-        <div class="gate"><div class="n">{{ job.tailor_result.gate_scores.recruiter if job.tailor_result.gate_scores.recruiter is not none else '—' }}</div><div class="l">Recruiter</div></div>
-        <div class="gate"><div class="n">{{ job.tailor_result.gate_scores.hiring_manager if job.tailor_result.gate_scores.hiring_manager is not none else '—' }}</div><div class="l">Hiring mgr</div></div>
+        <div class="gate"><div class="l">ATS</div><div class="n">{{ job.tailor_result.gate_scores.ats if job.tailor_result.gate_scores.ats is not none else '—' }}</div></div>
+        <div class="gate"><div class="l">Recruiter</div><div class="n">{{ job.tailor_result.gate_scores.recruiter if job.tailor_result.gate_scores.recruiter is not none else '—' }}</div></div>
+        <div class="gate"><div class="l">Hiring mgr</div><div class="n">{{ job.tailor_result.gate_scores.hiring_manager if job.tailor_result.gate_scores.hiring_manager is not none else '—' }}</div></div>
       </div>
       {% endif %}
       {% endif %}
@@ -525,6 +546,9 @@ function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
 function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   try{localStorage.setItem('ja-theme',t);}catch(e){} applyTheme(t);}
 try{applyTheme(localStorage.getItem('ja-theme')||'light');}catch(e){}
+
+/* ---------- mobile nav ---------- */
+function toggleNav(){document.getElementById('main-nav').classList.toggle('open');}
 
 /* ---------- details ---------- */
 function toggleDetails(jobId, btn){
@@ -726,9 +750,9 @@ function renderTailorResult(jobId, d){
   if(d.jd_narrative) h+='<div style="margin-top:16px"><div class="eyebrow">JD narrative</div><p class="muted">'+d.jd_narrative+'</p></div>';
   if(d.gate_scores){
     h+='<div style="margin-top:16px"><div class="eyebrow">Gate scores</div><div class="gate-grid">'+
-       '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
-       '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
-       '<div class="gate"><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div><div class="l">Hiring manager</div></div>'+
+       '<div class="gate"><div class="l">ATS</div><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div></div>'+
+       '<div class="gate"><div class="l">Recruiter</div><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div></div>'+
+       '<div class="gate"><div class="l">Hiring manager</div><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div></div>'+
        '</div></div>';
   }
   if(d.gaps && d.gaps.length){
@@ -745,9 +769,9 @@ function renderTailorResult(jobId, d){
     res.innerHTML='<div class="eyebrow">Tailored resume</div><div style="margin-top:4px">'+
       (d.resume_path ? '<a href="'+d.resume_path+'" target="_blank" rel="noopener"><strong>'+name+'</strong></a>' : '<strong>'+name+'</strong>')+'</div>'+
       (d.gate_scores ? '<div class="gate-grid">'+
-        '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
-        '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
-        '<div class="gate"><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div><div class="l">Hiring mgr</div></div>'+
+        '<div class="gate"><div class="l">ATS</div><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div></div>'+
+        '<div class="gate"><div class="l">Recruiter</div><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div></div>'+
+        '<div class="gate"><div class="l">Hiring mgr</div><div class="n">'+(d.gate_scores.hiring_manager!=null?d.gate_scores.hiring_manager:'—')+'</div></div>'+
       '</div>' : '');
   }
 }

@@ -97,6 +97,18 @@ h1,h2,h3,h4{margin:0;letter-spacing:-.018em;font-weight:600}
 .icon-btn{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);
   display:grid;place-items:center;cursor:pointer;color:var(--text-2);transition:.15s var(--ease)}
 .icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.nav-toggle{display:none}
+@media(max-width:720px){
+  .appbar-inner{position:relative}
+  .nav-toggle{display:grid}
+  .nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;
+    gap:0;overflow-x:visible;background:var(--surface);border-bottom:1px solid var(--border);
+    padding:var(--sp-2) var(--sp-4);box-shadow:var(--shadow-md)}
+  .nav.open{display:flex}
+  .nav-link{padding:10px 4px}
+  .appbar-inner{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:10px}
+  .appbar-actions{width:100%;justify-content:flex-end}
+}
 
 /* ---------- layout ---------- */
 .page{max-width:1180px;margin:0 auto;padding:var(--sp-8) var(--sp-6) 96px}
@@ -201,7 +213,8 @@ h1,h2,h3,h4{margin:0;letter-spacing:-.018em;font-weight:600}
 <header class="appbar">
   <div class="appbar-inner">
     <a class="brand" href="/"><span class="brand-mark">JA</span><span class="brand-text">Job Apply</span></a>
-    <nav class="nav">
+    <button class="icon-btn nav-toggle" type="button" onclick="toggleNav()" aria-label="Toggle menu">☰</button>
+    <nav class="nav" id="main-nav">
       <a class="nav-link" href="/">Dashboard</a>
       <a class="nav-link" href="/governance">Governance</a>
       <a class="nav-link active" href="/skills">Skills</a>
@@ -307,6 +320,9 @@ function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
 function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   try{localStorage.setItem('ja-theme',t);}catch(e){} applyTheme(t);}
 try{applyTheme(localStorage.getItem('ja-theme')||'light');}catch(e){}
+
+/* ---------- mobile nav ---------- */
+function toggleNav(){document.getElementById('main-nav').classList.toggle('open');}
 
 /* ---------- skills ---------- */
 function toggleSkill(id) {
