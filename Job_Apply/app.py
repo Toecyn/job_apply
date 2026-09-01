@@ -88,6 +88,15 @@ def get_jobs_data(status="all", market="all", min_score=70, fresh_hours=72):
                     j[f] = json.loads(j[f])
                 except Exception:
                     j[f] = []
+        # Written by cron_tailor.py once a tailored resume finishes generating
+        # (see /api/jobs/<id>/tailor-status) — parsed here so the job card can
+        # render its download link/gate scores on page load, not just right
+        # after generating it in the same browser session.
+        if j.get("tailor_result"):
+            try:
+                j["tailor_result"] = json.loads(j["tailor_result"])
+            except Exception:
+                j["tailor_result"] = None
         result.append(j)
     return result
 

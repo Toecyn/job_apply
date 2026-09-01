@@ -441,7 +441,19 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
       <div class="jd">{{ job.description|truncate(3000) }}</div>
     </div>
 
-    <div class="result-box" id="tailor-result-{{ job.id }}"></div>
+    <div class="result-box{{ ' show' if job.tailor_result and job.tailor_result.status == 'done' else '' }}" id="tailor-result-{{ job.id }}">
+      {% if job.tailor_result and job.tailor_result.status == 'done' %}
+      <div class="eyebrow">Tailored resume</div>
+      <div style="margin-top:4px"><a href="{{ job.tailor_result.resume_path }}" target="_blank" rel="noopener"><strong>{{ job.tailor_result.filename or job.tailor_result.resume_path }}</strong></a></div>
+      {% if job.tailor_result.gate_scores %}
+      <div class="gate-grid">
+        <div class="gate"><div class="n">{{ job.tailor_result.gate_scores.ats if job.tailor_result.gate_scores.ats is not none else '—' }}</div><div class="l">ATS</div></div>
+        <div class="gate"><div class="n">{{ job.tailor_result.gate_scores.recruiter if job.tailor_result.gate_scores.recruiter is not none else '—' }}</div><div class="l">Recruiter</div></div>
+        <div class="gate"><div class="n">{{ job.tailor_result.gate_scores.hiring_manager if job.tailor_result.gate_scores.hiring_manager is not none else '—' }}</div><div class="l">Hiring mgr</div></div>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
     <div class="followup" id="followup-{{ job.id }}"></div>
   </article>
   {% endfor %}
@@ -705,7 +717,8 @@ function pollTailorStatus(jobId, btn){
 }
 
 function renderTailorResult(jobId, d){
-  var h='<div class="notice notice-ok">Saved as <strong>'+(d.filename||d.resume_path||'resume')+'</strong></div>';
+  var name=d.filename||d.resume_path||'resume';
+  var h='<div class="notice notice-ok">Saved as '+(d.resume_path ? '<a href="'+d.resume_path+'" target="_blank" rel="noopener"><strong>'+name+'</strong></a>' : '<strong>'+name+'</strong>')+'</div>';
   if(d.jd_narrative) h+='<div style="margin-top:16px"><div class="eyebrow">JD narrative</div><p class="muted">'+d.jd_narrative+'</p></div>';
   if(d.gate_scores){
     h+='<div style="margin-top:16px"><div class="eyebrow">Gate scores</div><div class="gate-grid">'+
@@ -725,7 +738,8 @@ function renderTailorResult(jobId, d){
   var res=document.getElementById('tailor-result-'+jobId);
   if(res){
     res.classList.add('show');
-    res.innerHTML='<div class="eyebrow">Tailored resume</div><div style="margin-top:4px"><strong>'+(d.filename||d.resume_path)+'</strong></div>'+
+    res.innerHTML='<div class="eyebrow">Tailored resume</div><div style="margin-top:4px">'+
+      (d.resume_path ? '<a href="'+d.resume_path+'" target="_blank" rel="noopener"><strong>'+name+'</strong></a>' : '<strong>'+name+'</strong>')+'</div>'+
       (d.gate_scores ? '<div class="gate-grid">'+
         '<div class="gate"><div class="n">'+(d.gate_scores.ats!=null?d.gate_scores.ats:'—')+'</div><div class="l">ATS</div></div>'+
         '<div class="gate"><div class="n">'+(d.gate_scores.recruiter!=null?d.gate_scores.recruiter:'—')+'</div><div class="l">Recruiter</div></div>'+
