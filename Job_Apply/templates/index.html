@@ -100,14 +100,14 @@ h1,h2,h3,h4{margin:0;letter-spacing:-.018em;font-weight:600}
 .nav-toggle{display:none}
 @media(max-width:720px){
   .appbar-inner{position:relative}
-  .nav-toggle{display:grid}
+  .nav-toggle{display:grid;margin-left:auto}
   .nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;
     gap:0;overflow-x:visible;background:var(--surface);border-bottom:1px solid var(--border);
     padding:var(--sp-2) var(--sp-4);box-shadow:var(--shadow-md)}
   .nav.open{display:flex}
   .nav-link{padding:10px 4px}
   .appbar-inner{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:10px}
-  .appbar-actions{width:100%;justify-content:flex-end}
+  .appbar-actions{width:100%;margin-left:0;justify-content:flex-start}
 }
 
 /* ---------- layout ---------- */
@@ -219,7 +219,14 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
   color:var(--text-2);background:var(--surface-3);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-4)}
 
 .result-box{display:none;margin-top:var(--sp-4);border:1px solid var(--info-bd);background:var(--info-bg);
-  border-radius:var(--r-md);padding:var(--sp-4);animation:fadeUp .22s var(--ease)}
+  border-radius:var(--r-md);padding:var(--sp-4);animation:fadeUp .22s var(--ease);
+  /* Tailored resume filenames are one long underscore-joined string with no
+     spaces — CSS treats that as a single unbreakable word by default and it
+     overflowed the card (and the page) on narrow screens even after the
+     .gate .n fix, which didn't cover this element. overflow-wrap:anywhere
+     applies to every descendant, so it's a safety net for this box's
+     content generally, not just the filename. */
+  overflow-wrap:anywhere;min-width:0}
 .result-box.show{display:block}
 /* Each gate score is a full explanatory sentence from Claude (e.g. "9/10 —
    heavy overlap with JD phrases…"), not a bare number — .n used to be
@@ -266,7 +273,7 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
 .loading-state .spinner{width:26px;height:26px;border-width:2.5px;color:var(--accent)}
 .loading-state p{margin:var(--sp-4) 0 0;font-weight:550}
 .loading-state small{color:var(--text-3)}
-.notice{padding:10px 12px;border-radius:var(--r-sm);font-size:13px;border:1px solid var(--border)}
+.notice{padding:10px 12px;border-radius:var(--r-sm);font-size:13px;border:1px solid var(--border);overflow-wrap:anywhere}
 .notice-ok{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-bd)}
 .notice-err{background:var(--danger-bg);color:var(--danger-fg);border-color:var(--danger-bd)}
 </style>
