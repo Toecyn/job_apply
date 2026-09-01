@@ -70,7 +70,12 @@ def upload(path: str, data: bytes, content_type: str) -> str:
         },
         timeout=30,
     )
-    resp.raise_for_status()
+    # raise_for_status() alone only reports "400 Client Error: Bad Request"
+    # with no indication of *why* — Vercel's actual JSON error body has that,
+    # and losing it is exactly what made the previous wrong-shape request
+    # (see the NOTE above) take multiple round-trips to actually diagnose.
+    if not resp.ok:
+        raise RuntimeError(f"Vercel Blob upload failed: {resp.status_code} {resp.text}")
     return resp.json()["url"]
 
 

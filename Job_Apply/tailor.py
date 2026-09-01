@@ -553,13 +553,16 @@ def build_tailored_docx(review_data):
             pass
         return {"success": True, "path": blob_url, "filename": filename}
     except Exception as e:
-        # Blob storage not configured yet, or the upload failed — fall back
-        # to the local /tmp path rather than losing the generated docx
-        # outright. This path will not survive past the current invocation
-        # on Vercel, so treat this branch as a signal to set up
-        # BLOB_READ_WRITE_TOKEN, not as a working download link in prod.
-        print(f"tailor: Blob upload failed, returning local path instead: {e}")
-        return {"success": True, "path": output_path, "filename": filename}
+        # Previously fell back to returning {"success": True, "path":
+        # output_path, ...} here — output_path is a path on whatever runner
+        # generated it (this now runs in a GitHub Actions job, torn down
+        # right after), so that "success" was always a dead link with no
+        # visible error. Report the real failure instead: cron_tailor.py
+        # writes this into tailor_result, so it now surfaces in the
+        # dashboard as an actual error instead of a resume that silently
+        # never downloads.
+        print(f"tailor: Blob upload failed: {e}")
+        return {"error": f"Resume generated but upload to storage failed: {e}"}
 
 
 if __name__ == "__main__":
