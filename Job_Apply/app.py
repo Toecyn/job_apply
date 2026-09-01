@@ -60,6 +60,33 @@ except Exception as e:
     print(f"init_db() at startup failed (DATABASE_URL unset locally, etc.): {e}")
 
 
+# search_pass is a "{location}_{mode}" slug (see profile_store.market_pass_name)
+# for jobs scraped under the dynamic per-profile markets system, or one of a
+# handful of old fixed names (ottawa, us_remote, canada_hybrid, ...) for jobs
+# scraped before that — either way, the mode is reliably the suffix after the
+# last matching mode name, so this works for both without needing to look up
+# a market's current config (which may have since been edited or removed).
+WORK_MODES = ["remote", "hybrid", "contract", "on_site"]
+
+
+def infer_work_mode(search_pass):
+    for mode in WORK_MODES:
+        if search_pass and search_pass.endswith(f"_{mode}"):
+            return mode.replace("_", "-")
+    return None
+
+
+def display_country(country):
+    if not country:
+        return None
+    # Old fixed-market jobs stored the short code "us" (see save_jobs()'s
+    # former default); new profile-driven markets store the real country
+    # name (e.g. "Nigeria") straight from Settings' country selector.
+    if country.strip().lower() == "us":
+        return "US"
+    return country.strip().title()
+
+
 def get_jobs_data(status="all", market="all", min_score=70, fresh_hours=72):
     conn = get_db()
     query = "SELECT * FROM jobs WHERE is_stale = 0"
@@ -97,6 +124,8 @@ def get_jobs_data(status="all", market="all", min_score=70, fresh_hours=72):
                 j["tailor_result"] = json.loads(j["tailor_result"])
             except Exception:
                 j["tailor_result"] = None
+        j["work_mode"] = infer_work_mode(j.get("search_pass"))
+        j["country_label"] = display_country(j.get("country"))
         result.append(j)
     return result
 

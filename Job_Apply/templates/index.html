@@ -392,14 +392,18 @@ a.stat.active{border-color:var(--accent);background:var(--accent-soft);box-shado
           <span class="mono dim">{% if job.date_posted and job.date_posted != 'nan' %}{{ job.date_posted }}{% else %}{{ job.date_found[:10] }}{% endif %}</span>
         </div>
         <div class="job-badges">
-          {% if job.search_pass == 'ottawa' %}
-            <span class="badge badge-info badge-dot">Ottawa</span>
-          {% elif job.search_pass == 'us_remote' %}
-            <span class="badge badge-warn badge-dot">US Remote</span>
-          {% else %}
-            <span class="badge badge-dot">Canada</span>
+          {% if job.country_label %}<span class="badge badge-dot">{{ job.country_label }}</span>{% endif %}
+          {% if job.work_mode == 'remote' %}
+            <span class="badge badge-success">Remote</span>
+          {% elif job.work_mode == 'hybrid' %}
+            <span class="badge badge-info">Hybrid</span>
+          {% elif job.work_mode == 'contract' %}
+            <span class="badge badge-warn">Contract</span>
+          {% elif job.work_mode == 'on-site' %}
+            <span class="badge">On-site</span>
+          {% elif job.is_remote %}
+            <span class="badge badge-success">Remote</span>
           {% endif %}
-          {% if job.is_remote %}<span class="badge badge-success">Remote</span>{% endif %}
           <span class="badge">{{ job.source }}</span>
           {% if job.status and job.status != 'new' %}<span class="badge badge-info">{{ job.status|capitalize }}</span>{% endif %}
         </div>
