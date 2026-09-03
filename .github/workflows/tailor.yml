@@ -25,7 +25,13 @@ jobs:
       run:
         working-directory: Job_Apply
     steps:
+      # Hardcoded rather than relying on github.ref: fine today since
+      # workflow_dispatch already resolves to whatever ref app.py passed,
+      # but see scrape.yml's checkout for why that resolution silently
+      # breaks the moment a `schedule` trigger is ever added here too.
       - uses: actions/checkout@v4
+        with:
+          ref: claude/hopeful-lovelace-c1aekc
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

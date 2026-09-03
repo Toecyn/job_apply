@@ -11,6 +11,15 @@ name: Scrape jobs
 # time) matching the cadence scraper.py/scheduler.py were originally tuned
 # for: 7:30am, 10:00am, 4:00pm, 8:00pm. Adjust the cron expressions if that's
 # not the right timezone.
+#
+# checkout below hardcodes ref: claude/hopeful-lovelace-c1aekc — that branch
+# has all the actual application code (main doesn't); this only matters for
+# the schedule trigger below, since GitHub runs `schedule` events using the
+# workflow file *as committed on the default branch* with no ref override,
+# unlike workflow_dispatch (app.py passes its own ref explicitly there, so
+# it already resolves correctly without this). Confirmed in production: a
+# scheduled run failed with "can't open file .../cron_scrape.py" because it
+# checked out main, which has never had that file.
 on:
   workflow_dispatch: {}
   schedule:
@@ -28,6 +37,8 @@ jobs:
         working-directory: Job_Apply
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: claude/hopeful-lovelace-c1aekc
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
